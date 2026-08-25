@@ -1,0 +1,32 @@
+{
+  "name": "flora",
+  "owner": {
+    "name": "FLORA",
+    "url": "https://flora.ai"
+  },
+  "metadata": {
+    "description": "Hand-tested workflows for FLORA's MCP server — batch generation first. Each skill carries measured numbers and named gotchas, not a restatement of the tool schemas.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "flora-mcp-skills",
+      "source": "./",
+      "description": "Batch generation, technique runs, mockup decks and canvas iteration for FLORA, bundled with the FLORA MCP server.",
+      "version": "0.1.0",
+      "author": {
+        "name": "FLORA"
+      },
+      "homepage": "https://github.com/flora-ai/flora-mcp-skills",
+      "keywords": [
+        "flora",
+        "batch",
+        "image-generation",
+        "video-generation",
+        "creative",
+        "pipeline",
+        "mcp"
+      ]
+    }
+  ]
+}
