@@ -43,6 +43,13 @@ codex mcp add flora --transport http https://agents.flora.ai/mcp
 }
 ```
 
+**Claude.ai** (web and desktop) — add it as a custom connector:
+
+1. Copy `https://agents.flora.ai/mcp`
+2. Go to **Settings → Connectors → Add custom connector**
+   ([direct link](https://claude.ai/settings/connectors?modal=add-custom-connector))
+3. Paste, sign in, and start generating
+
 **ChatGPT** — FLORA is in the app directory; enable it there.
 
 ### Then add the skills
@@ -64,6 +71,30 @@ git clone https://github.com/florafauna-ai/flora-mcp-skills.git
 cp -r flora-mcp-skills/skills/* .codex/skills/       # Codex
 cp -r flora-mcp-skills/skills/* .cursor/rules/       # Cursor
 ```
+
+**Claude.ai — there is no plugin install, so pick one of three.** `claude plugin` is
+Claude Code only; on web and desktop the skills go in by hand.
+
+*A Project, if you use FLORA regularly.* Create a Project, open **Set custom
+instructions**, and paste in the contents of the skill you want — for example
+[`skills/flora-batch-generate/SKILL.md`](skills/flora-batch-generate/SKILL.md). Every
+chat inside that Project then has it, with nothing to re-paste. This is the most
+reliable option and it costs nothing.
+
+*Upload it as a Skill, for something reusable across Projects.* Claude.ai takes a
+zipped skill folder, and this repo's layout is already the right shape — one directory
+per skill with a `SKILL.md` inside it. Zip the one you want:
+
+```bash
+git clone https://github.com/florafauna-ai/flora-mcp-skills.git
+cd flora-mcp-skills/skills && zip -r flora-batch-generate.zip flora-batch-generate
+```
+
+Then upload it from Claude's settings, under skills/capabilities. Zipping from the repo
+rather than downloading a prebuilt archive means you always get the current version.
+
+*Or just ask for it inline* — see the raw-URL option below, which needs no setup at all
+and works in a normal chat.
 
 **Or no install at all** — point your agent straight at one skill:
 
