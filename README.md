@@ -108,6 +108,12 @@ tenth the wall clock — and the gap widens linearly with the size of your list.
 |---|---|
 | **[flora-refine-loop](skills/flora-refine-loop/SKILL.md)** ★ | The first result is wrong and you need to drive it to a specific goal — "that's not quite right", "closer, but the X is off". Uses a **free** vision judge to name the defect, changes the prompt to fix it, and stops when the goal is met or the defect stops moving. Reach for this the moment someone is re-running the same prompt hoping for a better roll. |
 
+### Sequence — script to moving pictures
+
+| Skill | Use it when |
+|---|---|
+| **[script-to-video](skills/script-to-video/SKILL.md)** | You have a script or narrative and want animated clips. Staged pipeline with approval gates — script → shot list → consistent keyframes → motion — because a clip costs 30–90x its keyframe, so a drifted still must be caught before it is animated. Delivers ordered clip URLs, not a finished cut. |
+
 ### Transform — you already have the image
 
 | Skill | Use it when |
