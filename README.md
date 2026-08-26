@@ -136,6 +136,83 @@ tenth the wall clock — and the gap widens linearly with the size of your list.
 
 ---
 
+## Try it
+
+Copy one of these. Skills fire on what you ask for, not on being named — you should
+never have to type a skill's name.
+
+### flora-batch-generate
+
+> Here are 24 products from our spring catalogue. Generate a PDP shot for each one —
+> same studio setup on every product, seamless warm-grey, soft key from camera left.
+> Total the cost before you spend anything.
+
+> Take this campaign line and give me 12 localised versions, one per market, same art
+> direction throughout. Markets are in the attached sheet.
+
+> I have a folder of 40 product URLs. One hero image each, consistent lighting. Tell me
+> what it'll cost first.
+
+### flora-refine-loop
+
+> Generate a single white ceramic mug on a plain black surface. Handle pointing right,
+> top-down bird's-eye view looking straight down, no other objects. Keep refining until
+> it matches — max 3 rounds.
+
+> That's not quite right, try again.
+>
+> *(The skill should refuse to re-roll blind and ask what "right" means. If it just
+> regenerates, the skill didn't fire — that's the bug to look for.)*
+
+> A photo of a clock face showing exactly 4:37. Refine until the hands are correct.
+>
+> *(Models are bad at clock hands. Correct behaviour is stopping once the same defect
+> survives a real prompt change, and handing you options — not burning more rounds.)*
+
+### script-to-video
+
+> Turn this script into a video. Same character and lighting across every shot.
+>
+> ```
+> INT. DINER — NIGHT. Rain on the window. A woman sits alone with a coffee.
+> She checks her watch. The door opens. She looks up.
+> ```
+
+> Storyboard this scene and animate it — 6 shots, 5 seconds each, 16:9. Show me the
+> keyframes before you spend anything on video.
+
+> Here's a 30-second ad script and our brand character sheet. Build the keyframes off
+> that reference, then animate. Quote the video stage separately.
+
+### flora-mockup-deck
+
+> Mock this poster up out of home — I want to see it on a wall, a bus shelter, that
+> kind of thing. Plus social sizes.
+
+> What would this campaign key visual look like in the wild? Square-on shots, and don't
+> touch the artwork.
+
+> Give me a placement deck for this ad, with 1:1, 4:5 and 9:16 resizes for social.
+
+### flora-run-technique
+
+> Put this product on a clean white background.
+
+> Match the lighting in this shot to the reference image.
+
+> What can FLORA actually do to an image I already have?
+
+### flora-canvas-iterate
+
+> What's in my Meridian project?
+
+> Pull up the hero images I made last week and redo them warmer — less blue in the
+> shadows.
+
+> Show me what I've generated in this project and what it cost.
+
+---
+
 ## What a good skill looks like here
 
 The bar is set by `flora-batch-generate` and `flora-mockup-deck`. Both share a shape,
