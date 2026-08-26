@@ -1,7 +1,7 @@
 {
   "name": "flora-mcp-skills",
   "description": "Hand-tested workflows for FLORA's MCP server. Batch generation, refine loops, script-to-video, technique runs, mockup decks and canvas iteration — bundled with the FLORA MCP server so one install gets you from nothing to a running pipeline.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": {
     "name": "FLORA",
     "url": "https://flora.ai"
