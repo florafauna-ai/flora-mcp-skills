@@ -98,6 +98,53 @@ We will run it before merging. Expect review to push on the four bars above, mos
 on measured numbers — that is usually the gap between a workflow that works for you and
 one that works for a stranger's agent.
 
+## Releasing — for maintainers
+
+**Bump the version, or the change reaches nobody.**
+
+An installed plugin is a frozen snapshot pinned by **version string**, not by commit.
+`claude plugin update` compares versions, so pushing to `main` without a bump leaves
+every existing install exactly where it was — and it fails silently. There is no
+warning, no error, and `plugin update` cheerfully reports:
+
+```
+✔ flora-mcp-skills is already at the latest version (0.1.0).
+```
+
+…while sitting on a copy that is missing your new skill. This has already happened
+once here: two skills were added under `0.1.0` and were invisible to anyone who
+installed early.
+
+So, whenever you add a skill or materially change a `SKILL.md`, bump **both** manifests
+in the same commit:
+
+```
+.claude-plugin/plugin.json         "version"
+.claude-plugin/marketplace.json    "metadata.version" AND "plugins[0].version"
+```
+
+Then tell users what changed and how to get it — assume they will not refresh on
+their own:
+
+> **flora-mcp-skills 0.2.0** — adds `flora-refine-loop` and `script-to-video`.
+>
+> ```bash
+> claude plugin marketplace update flora
+> claude plugin update flora-mcp-skills
+> ```
+
+Two commands, no reinstall, no re-auth — the MCP connection is untouched. Changes apply
+on the **next session**, since plugins load at start-up.
+
+Versioning: bump the **minor** for a new skill or a material rewrite, the **patch** for
+a typo, a gotcha, or a clarified sentence. Someone reading the number should be able to
+tell whether they gained a capability or a correction.
+
+**The raw-URL path bypasses all of this.** It always serves `main`, so anyone who points
+their agent at a `raw.githubusercontent.com` link gets your change the moment you push —
+no version, no refresh, no restart. Keep that in mind when deciding how urgently a fix
+needs a release.
+
 ## Credit
 
 Skills keep their author. Add yourself at the foot of the file:
