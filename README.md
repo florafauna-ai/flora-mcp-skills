@@ -69,7 +69,16 @@ cp -r flora-mcp-skills/skills/* .cursor/rules/       # Cursor
 
 ```
 Read https://raw.githubusercontent.com/florafauna-ai/flora-mcp-skills/main/skills/flora-batch-generate/SKILL.md
-and follow it for these 40 products.
+and follow it for these 5 products:
+
+  PO-01  a matte black ceramic pour-over coffee dripper
+  WB-04  a brushed steel insulated water bottle
+  AP-09  a folded oatmeal linen apron
+  CB-02  a walnut wood cutting board, rectangular
+  SB-03  a stack of three speckled stoneware bowls
+
+One consistent studio style across all five: seamless warm-grey backdrop,
+soft softbox from camera left, subtle contact shadow, 85mm, centred, no props.
 ```
 
 ---
