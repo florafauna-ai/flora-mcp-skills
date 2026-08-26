@@ -102,6 +102,12 @@ tenth the wall clock — and the gap widens linearly with the size of your list.
 |---|---|
 | **[flora-batch-generate](skills/flora-batch-generate/SKILL.md)** ★ | You have a list — products, SKUs, campaign variants, localisations, scenes — and want one asset per row under a single consistent style. Handles parallel firing, batch polling, per-item variables, partial failure and retry classification. **Start here.** |
 
+### Refine — get one thing right, without burning credits
+
+| Skill | Use it when |
+|---|---|
+| **[flora-refine-loop](skills/flora-refine-loop/SKILL.md)** ★ | The first result is wrong and you need to drive it to a specific goal — "that's not quite right", "closer, but the X is off". Uses a **free** vision judge to name the defect, changes the prompt to fix it, and stops when the goal is met or the defect stops moving. Reach for this the moment someone is re-running the same prompt hoping for a better roll. |
+
 ### Transform — you already have the image
 
 | Skill | Use it when |
@@ -130,8 +136,8 @@ The bar is set by `flora-batch-generate` and `flora-mockup-deck`. Both share a s
 and it is not "a description of the tools":
 
 - **A law.** One sentence naming the invariant the skill exists to protect.
-  *"N items is one wait, not N waits."* *"The artwork is reproduced. The world is
-  generated."* If you cannot write that sentence, the skill is not ready.
+  *"N items is one wait, not N waits."* *"A re-run with an unchanged prompt is not a
+  refinement."* If you cannot write that sentence, the skill is not ready.
 - **Measured numbers.** `265ms`, `3.45x`, `17% undercount`, `limit: 100`. Not "fast",
   not "expensive", not "usually works".
 - **Named gotchas.** The specific thing that silently ate someone's credits, written
