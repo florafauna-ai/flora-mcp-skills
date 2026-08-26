@@ -50,17 +50,17 @@ codex mcp add flora --transport http https://agents.flora.ai/mcp
 The server is the capability; the skills are how your agent knows what to do with it.
 
 **Claude Code — one command, skills and server together.** This repo is also a plugin
-marketplace, so installing it wires up the MCP server *and* all four skills:
+marketplace, so installing it wires up the MCP server *and* every skill:
 
 ```bash
-claude plugin marketplace add flora-ai/flora-mcp-skills
+claude plugin marketplace add florafauna-ai/flora-mcp-skills
 claude plugin install flora-mcp-skills@flora
 ```
 
 **Any other agent — copy the skills in:**
 
 ```bash
-git clone https://github.com/flora-ai/flora-mcp-skills.git
+git clone https://github.com/florafauna-ai/flora-mcp-skills.git
 cp -r flora-mcp-skills/skills/* .codex/skills/       # Codex
 cp -r flora-mcp-skills/skills/* .cursor/rules/       # Cursor
 ```
@@ -68,7 +68,7 @@ cp -r flora-mcp-skills/skills/* .cursor/rules/       # Cursor
 **Or no install at all** — point your agent straight at one skill:
 
 ```
-Read https://raw.githubusercontent.com/flora-ai/flora-mcp-skills/main/skills/flora-batch-generate/SKILL.md
+Read https://raw.githubusercontent.com/florafauna-ai/flora-mcp-skills/main/skills/flora-batch-generate/SKILL.md
 and follow it for these 40 products.
 ```
 
