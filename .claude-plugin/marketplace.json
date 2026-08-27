@@ -6,14 +6,14 @@
   },
   "metadata": {
     "description": "Hand-tested workflows for FLORA's MCP server — batch generation first. Each skill carries measured numbers and named gotchas, not a restatement of the tool schemas.",
-    "version": "0.2.1"
+    "version": "0.3.0"
   },
   "plugins": [
     {
       "name": "flora-mcp-skills",
       "source": "./",
-      "description": "Batch generation, refine loops, script-to-video, technique runs, mockup decks and canvas iteration for FLORA, bundled with the FLORA MCP server.",
-      "version": "0.2.1",
+      "description": "Batch generation, refine loops, script-to-video, technique runs, mockup decks, PDP sets and canvas iteration for FLORA, bundled with the FLORA MCP server.",
+      "version": "0.3.0",
       "author": {
         "name": "FLORA"
       },

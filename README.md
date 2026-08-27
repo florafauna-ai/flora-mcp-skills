@@ -165,6 +165,7 @@ tenth the wall clock — and the gap widens linearly with the size of your list.
 | Skill | Use it when |
 |---|---|
 | **[flora-mockup-deck](skills/flora-mockup-deck/SKILL.md)** | You have a finished ad creative and need it placed in the world — out-of-home placements, social resizes, and a contact sheet. The artwork is reproduced exactly and never regenerated. |
+| **[flora-pdp-deck](skills/flora-pdp-deck/SKILL.md)** | You have a product photo — and a model frame if you're lucky — and need a shoppable set: studio plates, on-model views, and an A4 deck. Works from a single image, and says plainly what one image can and cannot buy you. |
 
 ### Iterate — build on what exists
 
@@ -233,6 +234,20 @@ never have to type a skill's name.
 > touch the artwork.
 
 > Give me a placement deck for this ad, with 1:1, 4:5 and 9:16 resizes for social.
+
+### flora-pdp-deck
+
+> Here's a photo of our candle. I need PDP shots for the product page, and a deck
+> at the end.
+
+> Product shot and a full-length model frame attached. Shoot it on her, studio
+> background, and de-brand it.
+
+> I've only got this one product photo. What can you actually get me from it?
+>
+> *(The skill should say plainly that one photo buys one plate, not four — asking
+> a single reference for four angles returns four near-duplicates and bills for
+> all of them. If it promises a full multi-angle set, that's the bug.)*
 
 ### flora-run-technique
 
