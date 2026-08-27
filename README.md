@@ -112,6 +112,44 @@ One consistent studio style across all five: seamless warm-grey backdrop,
 soft softbox from camera left, subtle contact shadow, 85mm, centred, no props.
 ```
 
+### Keeping the skills up to date
+
+New skills get added to this repo, and existing ones get corrected as we measure things
+that turn out to be wrong. **None of that reaches you on its own.** An installed plugin
+is a frozen snapshot — it will not tell you a new skill exists, and it will keep working
+happily on an old copy. Updating is something you do, not something that happens.
+
+**Claude Code — two commands, no reinstall and no re-auth.** Your MCP connection is
+untouched:
+
+```bash
+claude plugin marketplace update flora
+claude plugin update flora-mcp-skills
+```
+
+The first refreshes this repo's marketplace listing; the second pulls the new version.
+Skipping the first means the second has nothing new to find. **Changes apply on your
+next session** — plugins load at start-up, so restart your agent afterwards.
+
+If it reports `already at the latest version`, you are genuinely current.
+`claude plugin list` shows the version you are on.
+
+**Any other agent — re-copy.** There is no update command, so pull the repo again and
+overwrite:
+
+```bash
+cd flora-mcp-skills && git pull
+cp -r skills/* .codex/skills/        # Codex
+cp -r skills/* .cursor/rules/        # Cursor
+```
+
+**Claude.ai — re-paste or re-zip.** A Project's custom instructions and an uploaded
+Skill are both snapshots taken when you added them. Paste the current `SKILL.md` in
+again, or re-zip the folder from a freshly pulled clone and re-upload.
+
+**Raw URL — nothing to do.** That path always serves `main`, so it is current the moment
+we push. If you want to be sure you are reading today's version of a skill, use it.
+
 ---
 
 ## Start here: stop chatting, start batching
