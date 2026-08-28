@@ -1,27 +1,99 @@
 ---
 name: flora-mockup-deck
 description: >
-  Turn one finished ad creative into a campaign deck. Give it a poster, billboard
-  ad, campaign key visual or any finished artwork on a FLORA canvas, and it returns
-  four square-on out-of-home placements (gable end, transit platform, bus shelter,
-  construction hoarding), three social resizes (1:1, 4:5, 9:16), and one contact
-  sheet laying all of it out. Use when someone asks to mock up an ad, see a poster in
-  the wild, in situ or out of home, wants social sizes of an ad, or asks for a
-  placement deck. The artwork is reproduced exactly and never regenerated. One shot,
-  four billable generations, one contact sheet.
+  Turn one ad creative into a campaign deck — handed over as artwork, or described in
+  words. Give it a poster, billboard ad, campaign key visual or any finished artwork on
+  a FLORA canvas, or just a line like "a campaign deck of a flower", and it returns four
+  square-on out-of-home placements (gable end, transit platform, bus shelter,
+  construction hoarding), three social resizes (1:1, 4:5, 9:16), and one contact sheet
+  laying all of it out. Use when someone asks to mock up an ad, see a poster in the wild,
+  in situ or out of home, wants social sizes of an ad, asks for a placement deck, or asks
+  for a campaign deck of something they have no artwork for. Once the creative exists it
+  is reproduced exactly and never regenerated. One shot, four billable generations plus
+  one when the creative is written rather than supplied, one contact sheet.
 ---
 
 # flora-mockup-deck
 
+> **Attribution.** Pass `skill: "flora-mockup-deck"` on every FLORA call you make while
+> running this skill — `execute` included — along with a `skill_run_id` you invent
+> once when the run starts and reuse for the rest of it. Both are reporting only:
+> they change nothing about the call or its result.
+
 ## What it is
 
-Not an image generator. **A placement engine.** The creative already exists and is
-finished — the only job is putting it into the world convincingly, four ways, without
-altering it.
+Not an image generator. **A placement engine.** By the time the placements fire, the
+creative is finished and frozen — the only job is putting it into the world convincingly,
+four ways, without altering it.
+
+Usually the creative arrives finished. It can also be written: a line of text buys **one**
+generation, and that output becomes the master creative, from which point it is handled
+exactly like a supplied file. See "Two ways in".
 
 The thing that makes a mockup fail is never the photograph. It is the artwork drifting:
 recoloured, recropped, re-lettered, a word dropped. So the whole skill is built around
 one invariant.
+
+## Two ways in
+
+```
+ARTWORK   a url or an attached file      -> 4 generations
+WRITTEN   a line of text, no artwork     -> 5 generations (master + 4 placements)
+```
+
+`/flora-mockup-deck` followed by a description and nothing attached is the WRITTEN path:
+*create a campaign deck of a flower*, *a poster for a late-night ramen bar*, *out-of-home
+for a running shoe launch*. Nothing else about the skill changes. The text buys exactly
+one image, that image becomes the master creative, and the law closes over it.
+
+### Making the master
+
+One `flora_generate`, text-to-image, same model family as the placements:
+
+```
+model   "t2i-gpt-image-2-t2i"
+params  { aspect_ratio, resolution: "4k", quality: "high" }
+```
+
+**Prompt it as a printed poster, not as a photograph of a thing.** The text names a
+subject, and a subject is not an ad — "a flower" un-elaborated returns a stock botanical
+photograph, which then gets pasted onto a gable end and reads as a picture of a flower on
+a wall rather than as a campaign. Build the master prompt as:
+
+    A finished out-of-home poster. Flat artwork, square on, filling the frame edge to
+    edge. Print-quality graphic design — NOT a photograph of a poster and NOT a mockup:
+    no wall, no frame, no shadow, no room, no perspective, no torn edges, no border.
+
+    THE SUBJECT — <the request, expanded into one concrete image>
+    THE TYPE — <the headline, or "no type at all">
+
+Then the house grade clause, verbatim, exactly as the placements get it. The master and
+the four placements have to be graded the same or the deck reads as two different shoots.
+
+**The shape is yours to choose here, so choose portrait.** A supplied creative forces the
+site-matching problem below; a written one does not. `aspect_ratio: "2:3"` makes all four
+default sites valid and skips the trap entirely. Go landscape only if the request names a
+billboard or a landscape medium.
+
+**Type, when the request gives you no copy.** An ad usually has words and a one-line
+request usually has none. Never generate a real company's logo or wordmark. Either write
+one short headline of your own or generate the poster with no type at all — then say in
+one line which you did, so the user can hand you copy and re-run instead of wondering why
+the poster is silent.
+
+### The gate — show the master, then fire
+
+**This is the one place the skill stops, and it is not a draft round.** The master is not
+a preview of the deck; it is the thing the entire deck reproduces. Every placement carries
+it unchanged and nothing downstream is re-rollable, so a wrong master is four wrong
+placements with no way back — about $3.50 spent reproducing the wrong picture perfectly.
+
+Fire the master. Report the url. Get a yes. Then fire the four placements in one pass and
+run to the end without stopping, exactly as the ARTWORK path does.
+
+Re-rolling the master is allowed and bills again — say so before the second one. Once the
+user says yes the master is frozen and the law applies to it in full: from that point it
+is a supplied file that happens to have come from FLORA.
 
 ## One shot, minimal outputs
 
@@ -29,12 +101,14 @@ The skill runs **once** and emits exactly the deliverable. No draft round, no pr
 pass, no variant sprawl.
 
 ```
+1  generation    the master creative — WRITTEN path only, skipped when artwork is given
 4  generations   the placements — one per site, not four angles on one site
 3  resizes       1:1, 4:5, 9:16 — NOT generations, see below
 1  contact sheet the four placements in one grid
 ```
 
-**Four generations, three deterministic resizes, one contact sheet.** Nothing is repaired,
+**Four generations — five from a line of text — three deterministic resizes, one contact
+sheet.** Nothing is repaired,
 re-rolled or replaced, and nothing is measured. Generate the four, build the resizes,
 package everything, ship. If a placement is visibly wrong, say so in a sentence.
 
@@ -82,17 +156,24 @@ and the artwork passes through it untouched.
 ## Inputs
 
 ```
-CREATIVE    finished artwork              required — an HTTPS url or an attached file
+CREATIVE    the ad itself                 required — an HTTPS url, an attached file,
+                                          or a line of text describing it
 PLACES      4 named placements            optional, default: the four archetypes
 BRIEF       one line on where/what mood   optional
 ```
 
+`CREATIVE` is the only required input and it takes either form. Text alone is not a
+missing input — it is the WRITTEN path, and you generate the master before anything else.
+Ask for artwork only when the request names a specific existing creative you have no url
+for.
+
 **Getting the creative in.** Files attached in ChatGPT are already hosted on
 `files.openai.com` or `cdn.openai.com`, both allowlisted — pass that url straight to
 `flora_create_asset` as `source` and FLORA fetches it server-side. A FLORA output at
-`media.flora.ai` works the same way. Never base64-encode the file and never try to
-upload bytes; if the artwork genuinely has no url, say so and ask the user to add it
-to their FLORA project.
+`media.flora.ai` works the same way — including the master you just generated, which
+arrives as a url and needs no upload step. Never base64-encode the file and never try to
+upload bytes; if a supplied artwork genuinely has no url, say so and ask the user to add
+it to their FLORA project.
 
 You do not wire the artwork to anything. Each placement is its own `flora_generate`
 call carrying the artwork url in `params.image_url`.
@@ -111,6 +192,10 @@ Default placements, chosen because they are four genuinely different media buys:
 artwork across two planes and was the worst result of the whole test set.
 
 ## Match the site to the creative's shape
+
+**On the WRITTEN path this is already solved** — you chose the master's shape, so a `2:3`
+master and the four defaults never conflict. Read the rest of this section when the
+creative was supplied.
 
 **Read the creative's aspect ratio before choosing sites.** The defaults are not all the
 same shape: a 6-sheet and a hoarding are portrait media, a gable end and a platform panel
@@ -160,6 +245,10 @@ figures of 15–20 minutes were staggered firing plus a repair round, not the mo
 `resolution: "4k"` lowercase for GPT Image 2. (Nano Banana Pro also accepts `"4K"`
 uppercase — it is simply not the right model here.)
 
+`i2i-gpt-image-2-i2i` for the placements, `t2i-gpt-image-2-t2i` for the master on the
+WRITTEN path. Same model, same grade language, same lowercase resolution values — which
+is why the master and the four placements hold together as one set.
+
 **Never Krea.** It reinterprets what you wire it, which is the one thing that must
 never happen to the creative.
 
@@ -198,6 +287,9 @@ GPT Image 2 and Nano Banana Pro need no pacing.
 **"One shot" means one deck, not one generation round — and you do not stop to repair.**
 Stated plainly because the ambiguity itself cost time in live use: a run hesitated over
 whether it was allowed to fix a bad placement. It is not.
+
+The master gate on the WRITTEN path is the single exception, and it resolves before any
+placement exists. Once the four are firing, nothing stops.
 
 ## Prompt architecture
 
@@ -366,6 +458,8 @@ credits               every placement bills. State the total and get a yes befor
                       the bill: measured 0.253 quoted against 0.873 actually charged,
                       3.45x. Quote from a completed run's charged_cost, or say plainly
                       that the figure is a floor. Four 4k placements are ~$3.50, not ~$1.
+                The WRITTEN path adds a fifth generation at the same rate — quote ~$4.40,
+                and quote it BEFORE the master, not before the placements.
 media urls            fetchable with no credentials. Path contains the date — read the
                       full url, never reconstruct it.
 
@@ -421,6 +515,7 @@ and the user can assemble them. Do not attempt to synthesise a PDF from tool out
 Nothing is written to disk. Every deliverable is a url returned by a run:
 
 ```
+the master       one url, from flora_generate — WRITTEN path only
 the placements   four urls, one per site, from flora_generate
 the resizes      three urls, from flora_run_action
 the contact      one url, from side-by-side-composite-browser
@@ -429,7 +524,9 @@ the contact      one url, from side-by-side-composite-browser
 Name the **work**, not the client — the poster's title, kebab-cased — and use it as the
 label when you report each url, so a user collecting several runs can tell them apart.
 `Many Hands` -> `Many-Hands-gable`, `Many-Hands-contact`. If the creative has no title,
-synthesise one from what is actually in the picture.
+synthesise one from what is actually in the picture. On the WRITTEN path, synthesise it
+from the request *before* firing the master, so the master and everything descended from
+it carry one name — `Many-Hands-master`, then `Many-Hands-gable`.
 
 The urls are public, unsigned and permanent. Putting one in a transcript discloses that
 asset to anyone who sees the transcript — worth a word to the user when the creative is
@@ -444,10 +541,15 @@ it ships.
 ```
 1  COVER        title, one-paragraph standfirst, and a spec strip:
                 CREATIVE / SOURCE (px + ratio) / PLACEMENTS / SOCIAL.
+                SOURCE reads SUPPLIED or GENERATED, and on the WRITTEN path the
+                standfirst carries the request verbatim, so the deck records what
+                was actually asked for.
                 The creative sits on this page — text one side, plate the other.
                 The standfirst MUST state that the creative is reproduced and
                 never regenerated; that sentence is the deck's only statement of
-                the law, so it does not get cut.
+                the law, so it does not get cut. On the WRITTEN path that law
+                starts at the master, not before it — say so in the same sentence
+                rather than implying the poster was handed over finished.
 2+ PLACEMENTS   ONE PAGE EACH. Image left at ~70% width. Right column carries:
                   <site name> as a heading
                   SHOT    focal length, camera height, angle
@@ -515,3 +617,8 @@ let the work speak.
 
 Four placements, contact-sheeted together, plus the measurement table. Name which one
 is strongest and why, and name any that failed and what specifically drifted.
+
+On the WRITTEN path, report the master's url as well and label it the master. It is a
+deliverable — the user now owns a poster they did not have — not scaffolding for the
+deck. Say in one line what you decided on their behalf: the shape you chose, and whether
+you wrote a headline, so the next run can change either.
