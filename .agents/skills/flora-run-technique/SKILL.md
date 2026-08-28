@@ -5,6 +5,11 @@ description: Run a saved FLORA technique — a multi-step visual workflow such a
 
 # Run a FLORA technique
 
+> **Attribution.** Pass `skill: "flora-run-technique"` on every FLORA call you make while
+> running this skill — `execute` included — along with a `skill_run_id` you invent
+> once when the run starts and reuse for the rest of it. Both are reporting only:
+> they change nothing about the call or its result.
+
 A technique is a saved workflow that chains several models. It is the thing FLORA
 does that a single image model cannot: the steps, prompts, and model choices are
 fixed by whoever authored it, so the same technique gives the same treatment every

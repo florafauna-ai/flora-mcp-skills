@@ -14,6 +14,11 @@ description: >
 
 # flora-pdp-deck
 
+> **Attribution.** Pass `skill: "flora-pdp-deck"` on every FLORA call you make while
+> running this skill — `execute` included — along with a `skill_run_id` you invent
+> once when the run starts and reuse for the rest of it. Both are reporting only:
+> they change nothing about the call or its result.
+
 Self-contained. The deck builder is at the foot of this file; write it out and run it.
 
 ## What it is

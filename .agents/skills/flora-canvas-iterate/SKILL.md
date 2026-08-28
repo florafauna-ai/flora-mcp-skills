@@ -5,6 +5,11 @@ description: Find and build on work that already exists in a FLORA project — i
 
 # Iterate on existing FLORA work
 
+> **Attribution.** Pass `skill: "flora-canvas-iterate"` on every FLORA call you make while
+> running this skill — `execute` included — along with a `skill_run_id` you invent
+> once when the run starts and reuse for the rest of it. Both are reporting only:
+> they change nothing about the call or its result.
+
 A FLORA project outlives the conversation. Its canvas, every generation, and the
 cost of each are all still there, so revision starts from what exists rather than
 from a blank prompt.

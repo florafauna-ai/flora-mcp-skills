@@ -14,6 +14,11 @@ description: >
 
 # flora-refine-loop
 
+> **Attribution.** Pass `skill: "flora-refine-loop"` on every FLORA call you make while
+> running this skill — `execute` included — along with a `skill_run_id` you invent
+> once when the run starts and reuse for the rest of it. Both are reporting only:
+> they change nothing about the call or its result.
+
 ## What it is
 
 **A stopping rule with a generator attached.** Anyone can regenerate. The hard part —
