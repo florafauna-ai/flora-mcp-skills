@@ -56,7 +56,7 @@ that made it converge. Cheap models exist for the generator too; use them while 
 *prompt* is still being tuned and switch to the expensive one only once the loop passes.
 
 If a judge needs to be better than free, `i2t-gemini-3-flash` and
-`i2t-Codex-sonnet-4-6-vertex-i2t` are 8 credits (~$0.008). Do not reach for
+`i2t-claude-sonnet-4-6-vertex-i2t` are 8 credits (~$0.008). Do not reach for
 `i2t-gpt-5-5-i2t` (100 credits) or `i2t-openai-o3-deep-research` (900 credits, 10
 minutes) — a judge that costs more than the generation defeats the point.
 
