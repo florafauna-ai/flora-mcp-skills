@@ -190,7 +190,7 @@ tenth the wall clock — and the gap widens linearly with the size of your list.
 
 | Skill | Use it when |
 |---|---|
-| **[script-to-video](skills/script-to-video/SKILL.md)** | You have a script or narrative and want animated clips. Staged pipeline with approval gates — script → shot list → consistent keyframes → motion — because a clip costs 30–90x its keyframe, so a drifted still must be caught before it is animated. Delivers ordered clip URLs, not a finished cut. |
+| **[flora-script-to-video](skills/flora-script-to-video/SKILL.md)** | You have a script or narrative and want animated clips. Staged pipeline with approval gates — script → shot list → consistent keyframes → motion — because a clip costs 30–90x its keyframe, so a drifted still must be caught before it is animated. Delivers ordered clip URLs, not a finished cut. |
 
 ### Transform — you already have the image
 
@@ -202,8 +202,14 @@ tenth the wall clock — and the gap widens linearly with the size of your list.
 
 | Skill | Use it when |
 |---|---|
-| **[flora-mockup-deck](skills/flora-mockup-deck/SKILL.md)** | You have a finished ad creative and need it placed in the world — out-of-home placements, social resizes, and a contact sheet. The artwork is reproduced exactly and never regenerated. |
+| **[flora-mockup-deck](skills/flora-mockup-deck/SKILL.md)** | You have a finished ad creative and need it placed in the world — out-of-home placements, social resizes, and a contact sheet. The artwork is reproduced exactly and never regenerated. Also takes a written brief instead of artwork — "a campaign deck of a flower" — and generates the master creative first, for one extra generation. |
 | **[flora-pdp-deck](skills/flora-pdp-deck/SKILL.md)** | You have a product photo — and a model frame if you're lucky — and need a shoppable set: studio plates, on-model views, and an A4 deck. Works from a single image, and says plainly what one image can and cannot buy you. |
+
+### Ship — all the way to the ad platform
+
+| Skill | Use it when |
+|---|---|
+| **[flora-brand-ad-pipeline](skills/flora-brand-ad-pipeline/SKILL.md)** | A product launch needs creative *and* everything after it — generation under a locked brand treatment, then Drive for archive, then Supabase for hosting, then Meta Ads creatives left **paused** for a human. The brand is an input, not an instruction: it lives in a saved technique, a reference image and a `brand.json`, never in prose an agent retypes. Pipeline state lives in a manifest, so a re-run repairs rather than duplicates. |
 
 ### Iterate — build on what exists
 
@@ -248,7 +254,7 @@ never have to type a skill's name.
 > *(Models are bad at clock hands. Correct behaviour is stopping once the same defect
 > survives a real prompt change, and handing you options — not burning more rounds.)*
 
-### script-to-video
+### flora-script-to-video
 
 > Turn this script into a video. Same character and lighting across every shot.
 >
@@ -272,6 +278,25 @@ never have to type a skill's name.
 > touch the artwork.
 
 > Give me a placement deck for this ad, with 1:1, 4:5 and 9:16 resizes for social.
+
+> Create a campaign deck of a flower.
+>
+> *(No artwork attached, so the skill writes the poster first — one generation — shows
+> it to you, and only places it once you say yes. Four wrong placements is the failure
+> it is avoiding, and they are not re-rollable.)*
+
+### flora-brand-ad-pipeline
+
+> Here's the strawberry launch — six SKUs, our usual treatment. Get them staged for me
+> to review.
+
+> Build the ad set for the new store opening: generate, archive, host, and leave the
+> Meta creatives paused.
+
+> Re-run the summer campaign — two of the ads didn't make it into Meta last time.
+>
+> *(The manifest is the point: a re-run should repair the two missing rows, not
+> regenerate and re-upload all of them.)*
 
 ### flora-pdp-deck
 
