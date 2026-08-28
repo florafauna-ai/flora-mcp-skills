@@ -1,0 +1,14 @@
+{
+  "_note": "Maps deck roles to files in src/. Fill in with map_assets.py; unmapped roles render as labelled placeholders.",
+  "roles": {
+    "master": null,
+    "placement_gable": null,
+    "placement_subway": null,
+    "placement_roadside": null,
+    "placement_hoarding": null,
+    "fmt_master": null,
+    "fmt_1x1": null,
+    "fmt_4x5": null,
+    "fmt_9x16": null
+  }
+}

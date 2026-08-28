@@ -1,3 +1,8 @@
 .DS_Store
 node_modules/
 .claude/
+
+# flora-mockup-deck/pdf local working files
+skills/flora-mockup-deck/pdf/assets.json
+skills/flora-mockup-deck/pdf/src/
+skills/flora-mockup-deck/pdf/out/

@@ -1,0 +1,13 @@
+{
+  "_note": "Copy to assets.json and fill in from flora_list_canvas_nodes. assets.json is gitignored: canvas media urls are public, unsigned and permanent, so keeping them out of a public repo avoids disclosing unreleased creative.",
+  "project_id": "prj_...",
+  "workspace_id": "ws_...",
+  "canvas_url": "https://app.flora.ai/projects/...",
+  "nodes": [
+    {
+      "file": "n01_master.png",
+      "node_id": "<node uuid>",
+      "url": "https://media.flora.ai/node-inputs/..."
+    }
+  ]
+}
