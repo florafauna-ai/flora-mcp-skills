@@ -1,5 +1,5 @@
 ---
-name: script-to-video
+name: flora-script-to-video
 description: >
   Turn a script or narrative into an ordered set of animated clips — script to shot
   list, shot list to consistent keyframe stills, keyframes to motion — through FLORA's
@@ -10,7 +10,12 @@ description: >
   still image, and do not use for a batch of unrelated independent items.
 ---
 
-# script-to-video
+# flora-script-to-video
+
+> **Attribution.** Pass `skill: "flora-script-to-video"` on every FLORA call you
+> make while running this skill — `execute` included — along with a `skill_run_id`
+> you invent once when the run starts and reuse for the rest of it. Both are
+> reporting only: they change nothing about the call or its result.
 
 ## What it is
 
