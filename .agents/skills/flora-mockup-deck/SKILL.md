@@ -5,12 +5,13 @@ description: >
   words. Give it a poster, billboard ad, campaign key visual or any finished artwork on
   a FLORA canvas, or just a line like "a campaign deck of a flower", and it returns four
   square-on out-of-home placements (gable end, transit platform, bus shelter,
-  construction hoarding), three social resizes (1:1, 4:5, 9:16), and one contact sheet
-  laying all of it out. Use when someone asks to mock up an ad, see a poster in the wild,
-  in situ or out of home, wants social sizes of an ad, asks for a placement deck, or asks
-  for a campaign deck of something they have no artwork for. Once the creative exists it
-  is reproduced exactly and never regenerated. One shot, four billable generations plus
-  one when the creative is written rather than supplied, one contact sheet.
+  construction hoarding), three social resizes (1:1, 4:5, 9:16), and an annotated A4 PDF
+  laying all of it out with the brief printed beside each placement. Use when someone asks
+  to mock up an ad, see a poster in the wild, in situ or out of home, wants social sizes of
+  an ad, asks for a placement deck or a PDF of one, or asks for a campaign deck of
+  something they have no artwork for. Once the creative exists it is reproduced exactly and
+  never regenerated. One shot, four billable generations plus one when the creative is
+  written rather than supplied, one PDF.
 ---
 
 # flora-mockup-deck
@@ -104,7 +105,8 @@ pass, no variant sprawl.
 1  generation    the master creative — WRITTEN path only, skipped when artwork is given
 4  generations   the placements — one per site, not four angles on one site
 3  resizes       1:1, 4:5, 9:16 — NOT generations, see below
-1  contact sheet the four placements in one grid
+1  contact sheet the four placements in one grid — needs the actions entitlement
+1  PDF           the annotated deck — free, and reachable on every surface
 ```
 
 **Four generations — five from a line of text — three deterministic resizes, one contact
@@ -190,6 +192,81 @@ Default placements, chosen because they are four genuinely different media buys:
 **The plate-shape column is not decoration.** Read it against the creative before firing
 — see "Match the site to the creative's shape" below. Never a corner wrap: it bends the
 artwork across two planes and was the worst result of the whole test set.
+
+## Resolve the ids once, before you spend anything
+
+**`flora_generate` requires `project_id`.** It is not optional and there is no default.
+An agent that has not decided on a project has to produce one at fire time, and what it
+produces is a guess — the most recently touched project from `flora_list_projects`, or a
+plausible-looking `prj_` string. Both are wrong, and neither errors in a way that looks
+like a mistake. **This is the single most common defect in a run of this skill**, and
+everything below exists to stop it.
+
+So resolve two ids **once**, at the top of the run, and thread the same two through every
+call — placements, resizes, contact sheet, and the deck's footer:
+
+```
+WORKSPACE   ws_...   flora_list_workspaces
+PROJECT     prj_...  flora_list_projects, or one the user named
+```
+
+**Copy ids verbatim. Never retype, shorten, or reconstruct one.** They are long opaque
+strings with no checksum, so a transposed character produces a valid-looking id that
+fails somewhere else entirely.
+
+**The two must belong together.** A project from one workspace paired with another
+workspace's id fails at fire time with a 400 that names the problem exactly:
+
+```
+input_validation_error   "Project does not belong to the specified workspace."
+```
+
+Measured, on an account with two workspaces — which is the ordinary case, since a
+personal workspace and a team workspace is the default shape. Taking `workspaces[0]` and
+a project the user mentioned is precisely how this happens. **Confirm the project appears
+in `flora_list_projects` for the workspace you are billing** before the first generation.
+One free call; four billable ones ride on it.
+
+**Ask which project when there is any doubt, and quote the name back.** Projects are
+overwhelmingly called `Untitled`, and duplicates of a real name are common — an account
+here had two live projects both named `Perfume Bottle Photography`. Name-matching picks
+one at random and there is no way to tell from the result which one it picked. `origin`
+separates them a little: `canvas` means a human made it in the UI, `chat` means an agent
+did.
+
+**`flora_create_project` works, but not in every workspace.** Measured on one account: it
+creates cleanly in one workspace and fails reproducibly in another with
+`400 input_validation_error` whose message is the literal string `Server Error` plus a
+request id — no field named, nothing wrong with the payload. It tracks the **workspace**,
+not the request: the workspace that refuses to create is the same one that returns 403
+for actions. Not a project cap either — the failing workspace held 4 projects, the
+working one 839.
+
+So creating a project is worth trying and is **not** worth debugging. If it 400s, do not
+reshape the payload and do not retry with a different name — fall back to a project that
+already exists, and say which one you picked and why.
+
+### What the project link actually contains
+
+```
+the project     https://app.flora.ai/projects/<project_id>
+one node        https://app.flora.ai/projects/<project_id>?focus=<node_id>
+```
+
+`?focus=` opens the canvas centred on a single node — use it to point at a specific
+placement instead of making the reader hunt. Node ids come from
+`flora_list_canvas_nodes`.
+
+**Only the placements are on the canvas.** `flora_generate` writes to the project;
+`flora_run_action` does not. The tool says so and it measures true — an action's output
+lands under `media.flora.ai/code-sandbox/...` and never appears in
+`flora_list_canvas_nodes` for the project it was scoped to. On an action run `project_id`
+buys authorization and a generation-history row, nothing more.
+
+So **the resizes and the contact sheet are not in the project**, and a link that implies
+otherwise sends the user looking for files that were never there. Either say what the
+link contains — "the four placements; the resizes and the sheet are urls below" — or put
+them on the canvas deliberately with `flora_add_action` then `flora_run_canvas_action`.
 
 ## Match the site to the creative's shape
 
@@ -448,10 +525,26 @@ run status            a run can report completed_at while status is STILL "runni
                       with no outputs. Key on status == "completed" AND outputs being
                       present; completed_at on its own does not mean done.
 flora_run_action      runs a prebuilt action headlessly on inputs supplied inline.
-                      Actions are credit-free and deterministic — this is where the
-                      resizes and the contact sheet come from, not local scripts.
+                      Credit-free and deterministic — where the resizes and the contact
+                      sheet come from. It does NOT touch the canvas: outputs land under
+                      media.flora.ai/code-sandbox/... and never appear as canvas nodes.
+                      project_id only scopes authorization and generation history.
+                      Entitled per workspace: a workspace without it returns
+                      403 forbidden "Actions are not enabled for this workspace.
+                      Upgrade your plan to use actions." That kills BOTH the resizes and
+                      the contact sheet, so check it before promising either. The PDF
+                      does not depend on actions and still builds.
+flora_create_project  works in some workspaces and 400s in others on the SAME account,
+                      tracking the workspace rather than the request. The message is the
+                      literal string "Server Error" with a request id and no field — it
+                      is NOT your payload, so reshaping it does nothing. Fall back to an
+                      existing project. The workspace that refuses this is the same one
+                      that refuses actions.
 flora_list_canvas_nodes  returns media nodes with their asset urls. Use
                       flora_get_canvas for structure and how nodes connect.
+ids                   project_id is REQUIRED on flora_generate, and it must belong to
+                      the workspace you pass, or: 400 input_validation_error "Project
+                      does not belong to the specified workspace."
 credits               every placement bills. State the total and get a yes before the
                       first call. Nothing is refundable and retries bill again.
                       The charged_cost flora_generate returns AT FIRE TIME UNDERSTATES
@@ -482,11 +575,73 @@ media urls            fetchable with no credentials. Everything this skill produ
                       Report urls; never claim to have written or opened a file.
 ```
 
-## The deck is a contact sheet, not a PDF
+## The deck is an annotated PDF
 
-There is no server-side PDF. The deliverable is a single composite image built with
-`side-by-side-composite-browser` — credit-free, deterministic, and returned as a url the
-user can open or drop into a deck themselves.
+**The deliverable is a paginated A4-landscape PDF**, built locally from HTML and printed
+by headless Chrome. Not a server-side render — there is no PDF endpoint — and not a
+contact sheet standing in for one.
+
+"Annotated" is the whole point. A grid of placements is a contact sheet: it shows what
+came back. The deck prints the SHOT / LIGHT / MOMENT you actually asked for beside each
+placement, so a media planner reads the brief next to the result and can act on it. Print
+what you **asked for**, not a description of what came back.
+
+```bash
+cd <project>/Deliverables
+curl -O <each placement url>          # media urls need no credentials
+python3 build_mockup_deck.py deck.json
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless \
+  --disable-gpu --no-pdf-header-footer --print-to-pdf="<Name>-deck.pdf" \
+  --virtual-time-budget=25000 "file://$PWD/out.html"
+```
+
+The builder, the `deck.json` shape and the page plan are in
+[`reference/deck-builder.md`](reference/deck-builder.md). Write it out beside the
+deliverables and run it there. Land the HTML next to the PDF — it re-renders in about two
+seconds, so a layout tweak never costs a regeneration.
+
+**Check the render, do not assume it.** Read the PDF pages back as images before
+reporting. `pdftoppm -png -r 60 out.pdf pg` is enough. Overflow into the footer is the
+failure to look for.
+
+**Say the full path to the PDF in the final message.** A deck nobody can find is not a
+deliverable.
+
+### Get the PDF out on every surface
+
+**The PDF is the deliverable. Take the best route the surface allows — do not skip
+straight to "can't".** Chrome is how route 1 prints; it is not what makes the deck
+possible.
+
+```
+1  shell + Chrome     build, then print headless          -> a .pdf on disk
+2  shell, no Chrome   build, user opens out.html, Cmd-P   -> Save as PDF
+3  no filesystem      run --remote, hand over out.html    -> user prints it
+```
+
+Route 2 costs nothing: `@page { size: A4 landscape }` is honoured by the browser's own
+print dialog, so **File → Print → Save as PDF** produces the same document the headless
+flag would.
+
+Route 3 is what makes this work on **claude.ai and ChatGPT**. With `--remote` the html
+references the `media.flora.ai` urls instead of inlining the bytes, which drops it to
+**8.5 KB** on a four-placement set — small enough to hand over as a file. Measured: those
+urls load into a browser with no credentials and print exactly as inlined images do. So
+the answer on a hosted surface is "here is the deck, open it and print" — one click from
+a PDF, not unavailable.
+
+Only say the deck cannot be built if all three fail. Never synthesise a PDF out of tool
+output.
+
+**Downscale before building, or it will not send.** Chrome re-embeds source images badly:
+measured on a real four-placement set, 58.1 MB from full-resolution PNGs against 4.4 MB
+at 2400px JPEG — 13x, with nothing lost, since the widest slot in the layout resolves
+~2185px at 300dpi. A deck nobody can attach to an email is not a document you can send.
+
+### The contact sheet, as a fallback
+
+Still worth building where actions are available: one composite image, credit-free and
+deterministic, that a user can drop straight into a deck of their own.
 
 ```
 flora_run_action  side-by-side-composite-browser
@@ -507,19 +662,20 @@ the plate has to stay clean.
 branded: no logo, no mark, no client name in the chrome. If a client name is wanted, it
 is a text parameter on the label pass, never a template edit.
 
-**When a real paginated PDF is required,** say plainly that this surface returns images
-and the user can assemble them. Do not attempt to synthesise a PDF from tool output.
-
 ## Naming and what comes back
-
-Nothing is written to disk. Every deliverable is a url returned by a run:
 
 ```
 the master       one url, from flora_generate — WRITTEN path only
-the placements   four urls, one per site, from flora_generate
-the resizes      three urls, from flora_run_action
-the contact      one url, from side-by-side-composite-browser
+the placements   four urls, one per site, from flora_generate — ON the canvas
+the resizes      three urls, from flora_run_action — NOT on the canvas
+the contact      one url, from side-by-side-composite-browser — NOT on the canvas
+the deck         a local .pdf path, built by the deck builder
+the project      https://app.flora.ai/projects/<project_id>
 ```
+
+Everything except the PDF is a url. Report the project link with the ids you resolved at
+the top of the run — not one reconstructed at the end, and not the workspace id, which is
+the substitution to watch for since both are long `_`-prefixed strings.
 
 Name the **work**, not the client — the poster's title, kebab-cased — and use it as the
 label when you report each url, so a user collecting several runs can tell them apart.
@@ -537,6 +693,10 @@ unreleased.
 One page per thing. Never grid placements two-up; a placement is the deliverable and it
 gets a page. **Every layout the skill produced appears in the deck** — if it was made,
 it ships.
+
+This is the page plan the builder implements. The footer carries `PROJECT` and `DATE` and
+nothing else — and `PROJECT` is the resolved `project_id`, linked, so the deck is
+traceable back to the canvas that made it a year from now.
 
 ```
 1  COVER        title, one-paragraph standfirst, and a spec strip:
@@ -615,8 +775,13 @@ let the work speak.
 
 ## Reporting back
 
-Four placements, contact-sheeted together, plus the measurement table. Name which one
-is strongest and why, and name any that failed and what specifically drifted.
+The full path to the PDF, the project link, and the urls. Name which placement is
+strongest and why, and name any that failed and what specifically drifted — in plain
+sentences, not a table. There is no audit block and no pass/fail column anywhere in this
+skill's output.
+
+Say what the project link contains, since it is not everything you are handing over: the
+placements are on that canvas, the resizes and the contact sheet are not.
 
 On the WRITTEN path, report the master's url as well and label it the master. It is a
 deliverable — the user now owns a poster they did not have — not scaffolding for the

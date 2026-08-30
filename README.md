@@ -202,7 +202,7 @@ tenth the wall clock — and the gap widens linearly with the size of your list.
 
 | Skill | Use it when |
 |---|---|
-| **[flora-mockup-deck](skills/flora-mockup-deck/SKILL.md)** | You have a finished ad creative and need it placed in the world — out-of-home placements, social resizes, and a contact sheet. The artwork is reproduced exactly and never regenerated. Also takes a written brief instead of artwork — "a campaign deck of a flower" — and generates the master creative first, for one extra generation. |
+| **[flora-mockup-deck](skills/flora-mockup-deck/SKILL.md)** | You have a finished ad creative and need it placed in the world — out-of-home placements, social resizes, and an annotated A4 PDF with the brief printed beside each placement. The artwork is reproduced exactly and never regenerated. Also takes a written brief instead of artwork — "a campaign deck of a flower" — and generates the master creative first, for one extra generation. |
 | **[flora-pdp-deck](skills/flora-pdp-deck/SKILL.md)** | You have a product photo — and a model frame if you're lucky — and need a shoppable set: studio plates, on-model views, and an A4 deck. Works from a single image, and says plainly what one image can and cannot buy you. |
 
 ### Ship — all the way to the ad platform
