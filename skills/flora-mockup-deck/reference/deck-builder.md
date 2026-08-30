@@ -4,6 +4,19 @@
 Write this file out beside the deliverables and run it there; it resolves image paths
 relative to `deck.json`.
 
+## Three ways to get the PDF
+
+**The PDF is the deliverable, so take the best route the surface allows.** Only the first
+needs Chrome, and only the first two need a filesystem.
+
+```
+1  shell + Chrome     build, then print headless          -> a .pdf on disk
+2  shell, no Chrome   build, user opens out.html, Cmd-P   -> Save as PDF
+3  no filesystem      hand over out.html itself           -> user prints it
+```
+
+### 1. Shell with Chrome
+
 ```bash
 cd <project>/Deliverables
 curl -O <each placement url>          # media urls need no credentials
@@ -13,24 +26,65 @@ python3 build_mockup_deck.py deck.json
   --virtual-time-budget=25000 "file://$PWD/out.html"
 ```
 
-Images are inlined as data URIs, so the HTML is self-contained and the PDF has no
-external dependencies — it survives being moved, and Chrome never races a file read.
+### 2. Shell without Chrome
 
-**Every section is conditional on its files existing.** A run that lost one placement
+Build the html and stop. The `@page { size: A4 landscape }` rule is honoured by the
+browser's own print dialog, so **File → Print → Save as PDF** produces the same document
+the headless flag would. Tell the user to switch margins to None and leave
+headers/footers off; the deck draws its own.
+
+### 3. No filesystem at all
+
+Run with `--remote` and hand over `out.html`. In url mode the html is **8.5 KB** on a
+four-placement set — small enough to be a file the user downloads and opens, at which
+point route 2 applies. Measured: the images load straight from `media.flora.ai` into a
+browser with no credentials, and render into the printed PDF exactly as inlined ones do.
+
+This is what makes the deck reachable on claude.ai and ChatGPT. It is one click further
+from a PDF than route 1, not unavailable.
+
+## Keep it emailable
+
+**Downscale before you build.** Chrome re-embeds source images into the PDF badly, and a
+deck nobody can attach to an email is not a document you can send.
+
+Measured on a real four-placement set (7.8 MB of source PNGs):
+
+```
+full-resolution PNGs             58.1 MB
+2400px long edge, JPEG q88        4.4 MB      <- 13x smaller, no visible loss
+```
+
+Nothing is lost in print: the widest image slot in the layout is 185mm, which at 300dpi
+is ~2185px, so 2400px is already above what the page can resolve.
+
+```python
+im.thumbnail((2400, 2400), Image.LANCZOS)
+im.save(out, quality=88, optimize=True)
+```
+
+`PIL` is not required to run the builder — only to downscale. Where it is missing, `sips
+-Z 2400 <file>` does the same job on macOS.
+
+## Notes
+
+Images are inlined as data URIs by default, so the html is self-contained and survives
+being moved. `--remote` switches to url references.
+
+**Every section is conditional on its images resolving.** A run that lost one placement
 still builds a valid deck; drop the missing file in and re-run. It re-renders in about
 two seconds, so a layout tweak never costs a regeneration.
 
 **It targets python 3.9**, which is what macOS ships — hence the
 `from __future__ import annotations` at the top. Do not remove it and do not reach for
 3.10-only syntax; the script has to run on a stock machine with nothing installed.
-`PIL` is not required.
 
 ## Verified
 
-Rendered on a four-placement, four-resize set: **6 pages** — cover, four placements,
-social. The social page was read back as an image to confirm the crops come out at
-matched width on a shared bottom edge with heights climbing left to right, which is the
-one thing that page exists to demonstrate.
+Rendered on a four-placement, four-resize set in both modes: **6 pages** each — cover,
+four placements, social. The pages were read back as images to confirm the social page
+comes out at matched width on a shared bottom edge with heights climbing left to right,
+which is the one thing that page exists to demonstrate.
 
 ## The script
 
@@ -64,7 +118,12 @@ deck.json:
                   {"use": "FEED",   "ratio": "1:1",  "file": "feed.png"}]
 }
 
-Every section is conditional on its files existing, so a partial set still builds a
+Every image entry takes "file" (a local path), "url" (a media.flora.ai link), or both.
+Local wins, because a deck with the bytes inlined survives being moved. Pass --remote to
+force url mode: the html stays a few KB, which is what makes it handable as a file on a
+surface with no filesystem. Media urls are public and unsigned, so they load for anyone.
+
+Every section is conditional on its images resolving, so a partial set still builds a
 valid deck. Drop a missing placement in and re-run; it re-renders in about two seconds,
 so a layout tweak never costs a regeneration.
 """
@@ -86,12 +145,30 @@ USABLE_W = PAGE_W - 2 * MARGIN
 USABLE_H = PAGE_H - 2 * MARGIN - FOOTER_H
 
 
+REMOTE = "--remote" in sys.argv  # reference media urls instead of inlining the bytes
+
+
 def embed(path: pathlib.Path) -> str | None:
     """Inline an image as a data URI so the PDF has no external dependencies."""
     if not path.exists():
         return None
     mime = mimetypes.guess_type(path.name)[0] or "image/png"
     return f"data:{mime};base64," + base64.b64encode(path.read_bytes()).decode()
+
+
+def src(item: dict, root: pathlib.Path) -> str | None:
+    """Resolve one image to something an <img> can load.
+
+    Local file wins: the deck is then self-contained and survives being moved. Falling
+    back to the url keeps the html small enough to hand over as a file on a surface with
+    no filesystem -- media urls are public and unsigned, so they load for anyone. Pass
+    --remote to force url mode even when the files are sitting right there.
+    """
+    if not REMOTE and item.get("file"):
+        got = embed(root / item["file"])
+        if got:
+            return got
+    return item.get("url") or None
 
 
 def esc(s: object) -> str:
@@ -122,7 +199,7 @@ def footer(deck: dict, n: int) -> str:
 
 def cover(deck: dict, root: pathlib.Path, n: int) -> str:
     cre = deck.get("creative") or {}
-    src = embed(root / cre["file"]) if cre.get("file") else None
+    plate_src = src(cre, root)
     spec = [
         ("CREATIVE", deck.get("title", "")),
         ("SOURCE", " · ".join(x for x in (cre.get("source"), cre.get("px"), cre.get("ratio")) if x)),
@@ -135,7 +212,7 @@ def cover(deck: dict, root: pathlib.Path, n: int) -> str:
         for k, v in spec
         if v
     )
-    plate = f'<div class="cover-plate"><img src="{src}"></div>' if src else ""
+    plate = f'<div class="cover-plate"><img src="{plate_src}"></div>' if plate_src else ""
     return f"""<section class="page cover">
   <div class="cover-txt">
     <h1>{esc(deck.get("title", "Untitled"))}</h1>
@@ -148,8 +225,8 @@ def cover(deck: dict, root: pathlib.Path, n: int) -> str:
 
 
 def placement(deck: dict, p: dict, root: pathlib.Path, n: int) -> str:
-    src = embed(root / p["file"])
-    if not src:
+    img = src(p, root)
+    if not img:
         return ""
     brief = "".join(
         f'<div class="brief-row"><span class="k">{k}</span>'
@@ -164,7 +241,7 @@ def placement(deck: dict, p: dict, root: pathlib.Path, n: int) -> str:
         else ""
     )
     return f"""<section class="page place">
-  <div class="place-img"><img src="{src}"></div>
+  <div class="place-img"><img src="{img}"></div>
   <div class="place-col">
     <h2>{esc(p.get("site", ""))}</h2>
     <div class="brief">{brief}</div>
@@ -183,7 +260,7 @@ def social(deck: dict, root: pathlib.Path, n: int) -> str:
     Solve the vertical first -- running the 9:16 off the bottom is the failure mode
     here, not running out of width.
     """
-    items = [s for s in (deck.get("social") or []) if embed(root / s.get("file", ""))]
+    items = [s for s in (deck.get("social") or []) if src(s, root)]
     if not items:
         return ""
     gap, head = 8.0, 26.0
@@ -193,7 +270,7 @@ def social(deck: dict, root: pathlib.Path, n: int) -> str:
     w = min(w_across, w_down)
     cells = "".join(
         f'<div class="cell" style="width:{w:.2f}mm">'
-        f'<img style="width:{w:.2f}mm" src="{embed(root / s["file"])}">'
+        f'<img style="width:{w:.2f}mm" src="{src(s, root)}">'
         f'<div class="cap"><span class="use">{esc(s.get("use"))}</span>'
         f'<span class="ratio">{esc(s.get("ratio"))}</span></div></div>'
         for s in items
@@ -273,7 +350,6 @@ def build(deck_path: pathlib.Path) -> pathlib.Path:
 
 
 if __name__ == "__main__":
-    target = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else "deck.json")
-    print(build(target))
-
+    args = [a for a in sys.argv[1:] if not a.startswith("-")]
+    print(build(pathlib.Path(args[0] if args else "deck.json")))
 ```

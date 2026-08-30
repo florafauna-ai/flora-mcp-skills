@@ -106,7 +106,7 @@ pass, no variant sprawl.
 4  generations   the placements — one per site, not four angles on one site
 3  resizes       1:1, 4:5, 9:16 — NOT generations, see below
 1  contact sheet the four placements in one grid — needs the actions entitlement
-1  PDF           the annotated deck — needs a filesystem and Chrome, not credits
+1  PDF           the annotated deck — free, and reachable on every surface
 ```
 
 **Four generations — five from a line of text — three deterministic resizes, one contact
@@ -607,16 +607,36 @@ failure to look for.
 **Say the full path to the PDF in the final message.** A deck nobody can find is not a
 deliverable.
 
-### This needs a filesystem, and it is the only part that does
+### Get the PDF out on every surface
 
-Everything else in this skill is urls in and urls out. The PDF is the exception: it needs
-somewhere to write files and a Chrome binary to print with. In Claude Code, a desktop
-agent or anything with a shell, that is fine.
+**The PDF is the deliverable. Take the best route the surface allows — do not skip
+straight to "can't".** Chrome is how route 1 prints; it is not what makes the deck
+possible.
 
-**On a hosted surface with no filesystem — claude.ai, ChatGPT — you cannot build it.** Say
-so plainly, in one sentence, rather than pretending. Then fall back to the contact sheet
-below and hand over the urls, so the user can run the builder themselves. Do not try to
-synthesise a PDF out of tool output.
+```
+1  shell + Chrome     build, then print headless          -> a .pdf on disk
+2  shell, no Chrome   build, user opens out.html, Cmd-P   -> Save as PDF
+3  no filesystem      run --remote, hand over out.html    -> user prints it
+```
+
+Route 2 costs nothing: `@page { size: A4 landscape }` is honoured by the browser's own
+print dialog, so **File → Print → Save as PDF** produces the same document the headless
+flag would.
+
+Route 3 is what makes this work on **claude.ai and ChatGPT**. With `--remote` the html
+references the `media.flora.ai` urls instead of inlining the bytes, which drops it to
+**8.5 KB** on a four-placement set — small enough to hand over as a file. Measured: those
+urls load into a browser with no credentials and print exactly as inlined images do. So
+the answer on a hosted surface is "here is the deck, open it and print" — one click from
+a PDF, not unavailable.
+
+Only say the deck cannot be built if all three fail. Never synthesise a PDF out of tool
+output.
+
+**Downscale before building, or it will not send.** Chrome re-embeds source images badly:
+measured on a real four-placement set, 58.1 MB from full-resolution PNGs against 4.4 MB
+at 2400px JPEG — 13x, with nothing lost, since the widest slot in the layout resolves
+~2185px at 300dpi. A deck nobody can attach to an email is not a document you can send.
 
 ### The contact sheet, as a fallback
 
