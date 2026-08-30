@@ -234,10 +234,17 @@ one at random and there is no way to tell from the result which one it picked. `
 separates them a little: `canvas` means a human made it in the UI, `chat` means an agent
 did.
 
-**`flora_create_project` is not a reliable escape hatch.** It currently fails with an
-opaque `400 input_validation_error` and a request id but no field, through both the tool
-and the SDK's `projects.create`. Do not plan a run around creating a fresh project; work
-in one that exists, and if the user wants a clean canvas, ask them to make it.
+**`flora_create_project` works, but not in every workspace.** Measured on one account: it
+creates cleanly in one workspace and fails reproducibly in another with
+`400 input_validation_error` whose message is the literal string `Server Error` plus a
+request id — no field named, nothing wrong with the payload. It tracks the **workspace**,
+not the request: the workspace that refuses to create is the same one that returns 403
+for actions. Not a project cap either — the failing workspace held 4 projects, the
+working one 839.
+
+So creating a project is worth trying and is **not** worth debugging. If it 400s, do not
+reshape the payload and do not retry with a different name — fall back to a project that
+already exists, and say which one you picked and why.
 
 ### What the project link actually contains
 
@@ -527,8 +534,12 @@ flora_run_action      runs a prebuilt action headlessly on inputs supplied inlin
                       Upgrade your plan to use actions." That kills BOTH the resizes and
                       the contact sheet, so check it before promising either. The PDF
                       does not depend on actions and still builds.
-flora_create_project  currently fails with an opaque 400 input_validation_error via both
-                      the tool and the SDK. Do not plan a run around creating one.
+flora_create_project  works in some workspaces and 400s in others on the SAME account,
+                      tracking the workspace rather than the request. The message is the
+                      literal string "Server Error" with a request id and no field — it
+                      is NOT your payload, so reshaping it does nothing. Fall back to an
+                      existing project. The workspace that refuses this is the same one
+                      that refuses actions.
 flora_list_canvas_nodes  returns media nodes with their asset urls. Use
                       flora_get_canvas for structure and how nodes connect.
 ids                   project_id is REQUIRED on flora_generate, and it must belong to
