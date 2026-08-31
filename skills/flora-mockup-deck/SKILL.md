@@ -521,9 +521,16 @@ params.image_url      the input image for an i2i model, as a SINGLE STRING. This
                       params.image_urls (plural, array) is accepted without complaint,
                       silently IGNORED, and still billed — you get a text-to-image
                       render of the prompt with the creative nowhere in it. Measured.
-run status            a run can report completed_at while status is STILL "running"
-                      with no outputs. Key on status == "completed" AND outputs being
-                      present; completed_at on its own does not mean done.
+flora_get_run         DO NOT poll a batch with this. It can report status "running" and
+                      progress 0 for a run that has already finished — measured at 16
+                      MINUTES of "running" on a run whose own record showed
+                      started_at -> completed_at 120s apart, with outputs present the
+                      whole time. A loop waiting for it to flip never exits.
+run status            poll flora_list_generations filtered to the project instead: one
+                      call covers the whole batch and reports terminal state. Key on
+                      status == "completed" AND outputs being present — completed_at on
+                      its own does not mean done, and neither does a "running" status
+                      mean it is not.
 flora_run_action      runs a prebuilt action headlessly on inputs supplied inline.
                       Credit-free and deterministic — where the resizes and the contact
                       sheet come from. It does NOT touch the canvas: outputs land under
@@ -588,15 +595,15 @@ what you **asked for**, not a description of what came back.
 
 ```bash
 cd <project>/Deliverables
-curl -O <each placement url>          # media urls need no credentials
-python3 build_mockup_deck.py deck.json
+python3 build_mockup_deck.py deck.json   # fetches the urls in deck.json itself
 "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless \
   --disable-gpu --no-pdf-header-footer --print-to-pdf="<Name>-deck.pdf" \
   --virtual-time-budget=25000 "file://$PWD/out.html"
 ```
 
 The builder is in the appendix at the foot of this file, and its docstring carries the
-`deck.json` shape. Write it out beside the deliverables and run it there. Land the HTML
+`deck.json` shape. Put the placement urls straight into it — the builder downloads and
+caches them into `src/` on first run, so there is no separate fetch step to get wrong. Write it out beside the deliverables and run it there. Land the HTML
 next to the PDF — it re-renders in about two seconds, so a layout tweak never costs a
 regeneration.
 
@@ -835,9 +842,10 @@ deck.json:
 }
 
 Every image entry takes "file" (a local path), "url" (a media.flora.ai link), or both.
-Local wins, because a deck with the bytes inlined survives being moved. Pass --remote to
-force url mode: the html stays a few KB, which is what makes it handable as a file on a
-surface with no filesystem. Media urls are public and unsigned, so they load for anyone.
+A url with no local file is downloaded once into src/ and cached, so a deck.json of urls
+builds on its own with no curl step. Pass --remote to reference the urls instead: the html
+stays a few KB, which is what makes it handable on a surface with no filesystem. Media
+urls are public and unsigned, so they load for anyone.
 
 Every section is conditional on its images resolving, so a partial set still builds a
 valid deck. Drop a missing placement in and re-run; it re-renders in about two seconds,
@@ -852,6 +860,7 @@ import json
 import mimetypes
 import pathlib
 import sys
+import urllib.request
 
 # A4 landscape, in mm.
 PAGE_W, PAGE_H = 297.0, 210.0
@@ -872,19 +881,47 @@ def embed(path: pathlib.Path) -> str | None:
     return f"data:{mime};base64," + base64.b64encode(path.read_bytes()).decode()
 
 
+def fetch(url: str, dest: pathlib.Path) -> pathlib.Path | None:
+    """Cache a media url on disk. Media urls are public, so no credentials are needed.
+
+    Downloading is the builder's job rather than the caller's: a deck.json carrying urls
+    should build on its own, and a hand-run curl per placement is a step to get wrong.
+    An already-populated file is left alone, so a re-run costs nothing.
+    """
+    if dest.exists() and dest.stat().st_size > 0:
+        return dest
+    try:
+        with urllib.request.urlopen(url, timeout=60) as r:
+            data = r.read()
+    except Exception as exc:
+        print(f"  fetch failed {dest.name}: {exc}", file=sys.stderr)
+        return None
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(data)
+    return dest
+
+
 def src(item: dict, root: pathlib.Path) -> str | None:
     """Resolve one image to something an <img> can load.
 
-    Local file wins: the deck is then self-contained and survives being moved. Falling
-    back to the url keeps the html small enough to hand over as a file on a surface with
-    no filesystem -- media urls are public and unsigned, so they load for anyone. Pass
-    --remote to force url mode even when the files are sitting right there.
+    Inlined local bytes win: the deck is then self-contained and survives being moved.
+    A url with no local file is fetched once into src/ and inlined from there. Pass
+    --remote to skip all of that and reference the urls directly, which keeps the html
+    a few KB -- small enough to hand over as a file on a surface with no filesystem.
     """
-    if not REMOTE and item.get("file"):
+    url = item.get("url")
+    if REMOTE:
+        return url or None
+    if item.get("file"):
         got = embed(root / item["file"])
         if got:
             return got
-    return item.get("url") or None
+    if url:
+        name = item.get("file") or url.rsplit("/", 1)[-1].split("?")[0]
+        got = fetch(url, root / "src" / pathlib.Path(name).name)
+        if got:
+            return embed(got)
+    return None
 
 
 def esc(s: object) -> str:
