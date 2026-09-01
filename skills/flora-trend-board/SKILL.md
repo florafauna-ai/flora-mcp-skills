@@ -1,6 +1,6 @@
 ---
 name: flora-trend-board
-description: Scan a fixed set of trend sources on a schedule, score which signals are actually moving, and render the strongest ones as generated mood boards posted into a team channel. Use for daily or weekly trend scans in footwear, apparel, fashion, beauty, interiors, furniture, automotive or any category with a visual trend cycle — colourway shifts, silhouette and form moves, material and finish direction, competitor launches, and cultural moments. Trigger on "what's moving in [category]", "trend scan", "trend report", "competitor watch", "mood board of what's happening", "keep the design team plugged in", "daily trend digest", or a request to replace a written trend report nobody reads with something visual. Also use when setting up the source list for a new client or vertical, when the boards are coming back samey, or when the scan is posting noise.
+description: Scan a fixed set of trend sources on a schedule, score which signals are actually moving, and render the strongest ones as generated mood boards posted into a team channel. Use for daily or weekly trend scans in footwear, apparel, fashion, beauty, interiors, furniture, automotive or any category with a visual trend cycle — colourway shifts, silhouette and form moves, material and finish direction, competitor launches, and cultural moments. Trigger on "what's moving in [category]", "trend scan", "trend report", "competitor watch", "mood board of what's happening", "keep the design team plugged in", "daily trend digest", or a request to replace a written trend report nobody reads with something visual. Also use when setting up the source list for a new client or vertical, when the boards are coming back samey, or when the scan is posting noise. Do not use for a one-off mood board with no source set behind it — that is a plain generation, and this skill is the scan, not the picture. Do not use to judge finished work against a brand standard, which is flora-brand-consistency-audit, and do not use it to place a finished creative into the world, which is flora-mockup-deck.
 ---
 
 # Trend scan → mood board
@@ -30,6 +30,46 @@ Rules:
 - Confirm each one is reachable before the first run; a source that 403s silently becomes a blind spot the scan never reports.
 - A list weighted to Retail and Culture reports what is already mainstream. If the client wants early, Origin and Competitor carry the weight.
 - Record why each source is on the list. Sources get stale and this is what lets someone prune it later.
+- Record **how** each source is read, not only its URL. See below — for most of the list, a plain fetch is not the answer.
+
+### Most of a good source list will not answer a plain fetch
+
+**Measured, building a 25-source footwear list from scratch: 15 reachable, 10 not.**
+Plain `curl`, following redirects, browser user-agent. The failures were not spread
+evenly:
+
+| Tier | Reachable | What blocked |
+| --- | --- | --- |
+| Origin | 5/5 | — |
+| Trade | 5/5 | — |
+| **Competitor** | **2/6** | 403, 403, 403, 406 |
+| **Retail** | **2/5** | 403, 403, 404 |
+| **Culture** | **1/4** | 403, 403, connection timeout |
+
+Editorial publishes to be read by machines. Commerce and community do not. Brand
+product pages, resale marketplaces and forums sit behind bot protection as their
+default posture, so **the two tiers that carry an early signal are the two that
+fail**, and the tier mix that survives a naive build is the one weighted to Trade —
+which is the mix the skill above tells you not to build.
+
+This is the starting state, not a degradation. Do not read a 60% reachable list as
+a list that broke; read it as a list that was never wired.
+
+Per blocked source, in order of preference:
+
+1. **A feed or an endpoint.** Many walled sites publish an unwalled one — a brand
+   newsroom RSS instead of the drops page, a forum's JSON endpoint instead of its
+   HTML. Prefer these; they are stable and intended for this.
+2. **An official API,** where the category has one.
+3. **A rendered fetch** through a headless browser, which clears most 403s because
+   the block is on the client, not on you.
+4. **Substitute the source.** A competitor covered by a trade title you can already
+   read is worth more than one you cannot read at all.
+5. **Drop it and say so.** A named gap beats a silent one.
+
+Record the chosen method beside the URL. A source that needs a rendered fetch and
+gets a plain one returns 403 forever, and the scan reports nothing rather than
+reporting a problem.
 
 ## 2. Signal extraction
 
@@ -71,6 +111,17 @@ Write each prompt fully — subject, lens, lighting, palette, surface, framing �
 
 Before firing: read the four prompts side by side. If two could be swapped without anyone noticing, one is wrong — rewrite it, do not regenerate it.
 
+**State the lens as what is in frame, never as what is not.** Measured: a material
+close-up prompt ending "no full shoe visible" returned a full shoe, centred, as the
+hero. The negative was ignored and the lens collapsed onto the same product shot the
+other three lenses produce — which is the exact failure this section exists to
+prevent, arriving through the prompt rather than through the digest.
+
+Write the frame instead. "Macro detail, the weave filling the frame, swatches and a
+brass rule beside it, shot at 100mm" leaves no room for a product hero without
+saying the word product. A lens described by exclusion is a lens the model is free
+to ignore.
+
 ## 5. Generate and assemble
 
 Fire the four prompts concurrently through the FLORA MCP — four together is roughly the time of one, sequentially it is four times the wait. Quote the run cost before the first scheduled run so nobody discovers the daily spend at month end.
@@ -89,7 +140,7 @@ Daily suits fast categories (footwear, streetwear, beauty); weekly suits slower 
 
 The failure of this type is silent staleness — the scan runs, the boards render, and they are quietly wrong. Check every run:
 
-- **Source reachability.** Count sources that returned content. A drop from 25 to 19 with no error is the failure this skill dies of.
+- **Source reachability.** Count sources that returned content, against the count that worked on the day you built the list — not against the number of URLs. A drop from 25 to 19 with no error is the failure this skill dies of; a list that only ever answered 15 of 25 is a different failure, and it happened before the first run.
 - **New-signal count.** Zero new signals across 25 sources means the scan broke, not that the category stopped.
 - **Repeat rate.** The same trend surfacing four runs running means the scoring window is too wide or the discard rule is not firing.
 - **Board divergence.** If the four boards in a run look alike, the lens assignment was not enforced.
