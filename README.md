@@ -186,6 +186,12 @@ tenth the wall clock — and the gap widens linearly with the size of your list.
 |---|---|
 | **[flora-refine-loop](skills/flora-refine-loop/SKILL.md)** ★ | The first result is wrong and you need to drive it to a specific goal — "that's not quite right", "closer, but the X is off". Uses a **free** vision judge to name the defect, changes the prompt to fix it, and stops when the goal is met or the defect stops moving. Reach for this the moment someone is re-running the same prompt hoping for a better roll. |
 
+### Cut — shots into a film
+
+| Skill | Use it when |
+|---|---|
+| **[flora-launch-video](skills/flora-launch-video/SKILL.md)** | Someone wants a launch video, app promo, SaaS teaser, sizzle or trailer — or wants something already made re-paced or re-cut. Generates the shots once, then holds the film as a JSON edit list, so "snappier", "hold that longer", "cut it to 15" re-render in three seconds for nothing. Returns a beat sheet, a look plate, look-locked frames, animated shots, a scored track, and a master plus 9:16 and 1:1 cutdowns. Type is never spoken to a video model — wordmarks are stills held in the cut. |
+
 ### Composite — animate what already exists
 
 | Skill | Use it when |

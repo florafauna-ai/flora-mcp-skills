@@ -7,7 +7,9 @@ description: >
   because each stage spends money animating the previous stage's output. Use for
   "turn this script into a video", "storyboard this and animate it", "make a video
   from this scene", or any script → image → video request. Do not use for a single
-  still image, and do not use for a batch of unrelated independent items.
+  still image, and do not use for a batch of unrelated independent items. Do not
+  use when the ask is a finished, re-cuttable film with a track and cutdowns —
+  that is flora-launch-video; this one stops at the clips.
 ---
 
 # flora-script-to-video
