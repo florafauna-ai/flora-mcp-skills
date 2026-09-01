@@ -198,11 +198,12 @@ tenth the wall clock — and the gap widens linearly with the size of your list.
 |---|---|
 | **[flora-run-technique](skills/flora-run-technique/SKILL.md)** | You want a saved multi-step FLORA workflow applied to a source image — background swap, relight, upscale, model swap, sketch-to-render. |
 
-### Reformat — one cut, every placement
+### Reformat — one asset, every placement
 
 | Skill | Use it when |
 | --- | --- |
 | **[flora-video-resize](skills/flora-video-resize/SKILL.md)** | You have one finished video and need it in every placement's aspect ratio — 9:16, 16:9, 4:5, 1:1 — without black bars or a crop that loses the subject. Generatively reframes through FLORA's video-to-video models, holding subject, wardrobe, motion, lighting, grade, on-screen text and timing from the source. |
+| **[flora-image-resize](skills/flora-image-resize/SKILL.md)** | Same job for a still. Reframes one image into other ratios through `i2i-qwen-image-edit`, holding subject, props, palette and grade. States plainly that it re-renders the frame rather than extending it, so an already-approved asset should be padded with the free AR action instead. |
 
 ### Present — turn finished work into a deliverable
 
