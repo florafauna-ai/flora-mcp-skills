@@ -211,6 +211,18 @@ tenth the wall clock — and the gap widens linearly with the size of your list.
 |---|---|
 | **[flora-brand-ad-pipeline](skills/flora-brand-ad-pipeline/SKILL.md)** | A product launch needs creative *and* everything after it — generation under a locked brand treatment, then Drive for archive, then Supabase for hosting, then Meta Ads creatives left **paused** for a human. The brand is an input, not an instruction: it lives in a saved technique, a reference image and a `brand.json`, never in prose an agent retypes. Pipeline state lives in a manifest, so a re-run repairs rather than duplicates. |
 
+### Watch — keep a team plugged in
+
+| Skill | Use it when |
+| --- | --- |
+| **[flora-trend-board](skills/flora-trend-board/SKILL.md)** | A design team needs to know what is moving in a category — colourways, silhouettes, materials, competitor launches — and nobody reads the written trend report. Scans a named source set on a schedule, ranks signals by velocity rather than by how interesting they sound, and posts generated mood boards into the channel the team already lives in. Carries a divergence rule so four boards do not come back looking like one board four times. |
+
+### Check — judge it before it ships
+
+| Skill | Use it when |
+| --- | --- |
+| **[flora-brand-consistency-audit](skills/flora-brand-consistency-audit/SKILL.md)** | A batch is individually acceptable but collectively inconsistent, and it is about to go to a client, an ad platform or a PDP. Judges a set against the brand's actual rules — identity, palette, treatment, crop system, lockups, background, output specs — and returns findings with severity, evidence and a fix each. Reads the set before the assets, and close-reads a stratified sample, because every image it looks at costs a vision call. |
+
 ### Iterate — build on what exists
 
 | Skill | Use it when |
