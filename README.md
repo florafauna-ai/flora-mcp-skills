@@ -186,6 +186,12 @@ tenth the wall clock — and the gap widens linearly with the size of your list.
 |---|---|
 | **[flora-refine-loop](skills/flora-refine-loop/SKILL.md)** ★ | The first result is wrong and you need to drive it to a specific goal — "that's not quite right", "closer, but the X is off". Uses a **free** vision judge to name the defect, changes the prompt to fix it, and stops when the goal is met or the defect stops moving. Reach for this the moment someone is re-running the same prompt hoping for a better roll. |
 
+### Composite — animate what already exists
+
+| Skill | Use it when |
+|---|---|
+| **[flora-motion-compositor](skills/flora-motion-compositor/SKILL.md)** | The subject already exists — a UI screenshot, a logo, a product photo, a Figma export — and you need real motion-graphics shots of it: 3D-tilted screens, staggered type reveals, camera moves, grade. Nothing is generated; every pixel comes from a file or a font, so type is pin-sharp, spelling is correct, and two renders of a scene are byte-identical. Renders from a JSON scene graph at **0 credits and ~12s a shot**, which makes re-rendering a whole film after a design change free. |
+
 ### Sequence — script to moving pictures
 
 | Skill | Use it when |
