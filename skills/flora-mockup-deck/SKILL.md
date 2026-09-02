@@ -595,9 +595,9 @@ what you **asked for**, not a description of what came back.
 
 ```bash
 cd <project>/Deliverables
-python3 build_mockup_deck.py deck.json   # fetches the urls in deck.json itself
+python3 build_mockup_deck.py deck.json --check   # fetches, packs and measures, all in one
 "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless \
-  --disable-gpu --no-pdf-header-footer --print-to-pdf="<Name>-deck.pdf" \
+  --disable-gpu --no-sandbox --no-pdf-header-footer --print-to-pdf="<Name>-deck.pdf" \
   --virtual-time-budget=25000 "file://$PWD/out.html"
 ```
 
@@ -607,9 +607,68 @@ caches them into `src/` on first run, so there is no separate fetch step to get 
 next to the PDF — it re-renders in about two seconds, so a layout tweak never costs a
 regeneration.
 
-**Check the render, do not assume it.** Read the PDF pages back as images before
-reporting. `pdftoppm -png -r 60 out.pdf pg` is enough. Overflow into the footer is the
-failure to look for.
+**Keep `--no-sandbox`.** Chrome will not launch as root or inside a container without it,
+which is most of the surfaces this skill runs on, and the failure is a bare non-zero exit
+that reads like the deck is impossible rather than like a missing flag.
+
+### A dropped image is silent — make the builder say so
+
+**This is the single most common way the deck comes out wrong.** Every section is
+conditional on its images resolving, so a plate that will not load does not leave a hole:
+the whole page is **dropped**, the remaining footers renumber over the gap, and the build
+exits 0. Measured on a deliberately broken set — a missing local file and a 404 url —
+the deck came out at **4 pages instead of 6, numbered 1..4**, with the cover plate gone
+and nothing on stdout to say so. It looks like a finished, slightly short deck.
+
+So the builder collects every unresolved image, names it, and **exits non-zero**:
+
+```
+3 image(s) did not resolve:
+  creative: ALSO-MISSING.png
+  TRANSIT: MISSING.png
+  SHELTER: https://media.flora.ai/does-not-exist.png
+  fix these or pass --partial to ship the deck without them
+```
+
+Fix them and re-run. `--partial` is the deliberate escape hatch for a genuinely
+incomplete set — and if you use it, say in the final message which placements are missing
+from the deck. Never report a page count you did not read back.
+
+### Measure the page, don't look at it
+
+`--check` loads the deck in the same headless Chrome that will print it, walks every
+`.page`, and reports anything outside its content box — which side, how many pixels, which
+element. Three seconds, and it exits non-zero.
+
+```
+page 1  SCROLL  +1236px
+page 1  OVERFLOW  top +1236.3px  div.cover-txt
+page 1  OVERFLOW  bottom +1105.7px  p.standfirst
+```
+
+That is an overlong standfirst running off the cover, named and quantified, without
+rendering a PDF or looking at anything. The layout loop is where this skill's wall-clock
+actually goes — render, squint at a thumbnail, guess which rule is wrong, render again —
+and **almost none of those rounds are taste. They are geometry.** A screenshot is a
+terrible way to read a number.
+
+```
+build with --check       free and instant; repeat until PASS
+render the PDF           once nothing is overflowing
+read the pages back      pdftoppm -png -r 60 out.pdf pg -- taste only, and only now
+```
+
+**A green check is not proof the page is good.** It proves nothing is outside its box. It
+cannot see a distorted aspect ratio, a weak cover, or dead space. That is what the single
+visual pass is for — do not skip it because the checker passed, and do not spend it on
+geometry the checker already covers.
+
+**If you change the CSS, verify the verifier.** Break the layout on purpose and confirm it
+goes red before trusting a green check. This is genuinely easy to get wrong: removing
+`max-height` from the placement image still reports PASS, because `align-items: center`
+shrinks the flex item — the oversized image distorts instead of overflowing and the page
+box stays clean. Confirm the failing build contains the bad rule AND that the reported
+failure is the one you meant to cause.
 
 **Say the full path to the PDF in the final message.** A deck nobody can find is not a
 deliverable.
@@ -640,10 +699,17 @@ a PDF, not unavailable.
 Only say the deck cannot be built if all three fail. Never synthesise a PDF out of tool
 output.
 
-**Downscale before building, or it will not send.** Chrome re-embeds source images badly:
-measured on a real four-placement set, 58.1 MB from full-resolution PNGs against 4.4 MB
-at 2400px JPEG — 13x, with nothing lost, since the widest slot in the layout resolves
-~2185px at 300dpi. A deck nobody can attach to an email is not a document you can send.
+**The builder downscales before embedding, and that is not optional.** Chrome re-embeds
+source images badly: measured on a four-placement set of full-resolution 4k PNGs,
+**113 MB** of PDF against **3.6 MB** at 2400px JPEG q88 — 31x, with nothing lost, since
+the widest slot in this layout resolves ~2185px at 300dpi. A deck nobody can attach to an
+email is not a document you can send, so packing is on by default and caches into
+`packed/` beside the source.
+
+`--no-pack` exists for the case where a client genuinely wants the print-resolution file,
+and it is almost never what you want — the full-resolution plates ship **alongside** the
+deck as separate urls, which is what a media planner actually needs. `--remote` skips
+packing entirely, since it references the urls rather than embedding anything.
 
 ### The contact sheet, as a fallback
 
@@ -798,28 +864,48 @@ you wrote a headline, so the next run can change either.
 ## Appendix — build_mockup_deck.py
 
 Write this out beside the deliverables and run it there; it resolves image paths relative
-to `deck.json`, whose shape is in the docstring. **Stdlib only — nothing to install.**
+to `deck.json`, whose shape is in the docstring. **Nothing to install** — stdlib, plus
+`PIL` if it happens to be there and `sips` if it is not.
+
+It does the whole tail of the build in one call: fetch the urls, pack the plates, lay out
+the pages, measure them, and fail loudly on anything that did not resolve.
+
+```
+python3 build_mockup_deck.py deck.json --check   the normal run
+  --check       measure every page in headless Chrome; non-zero on overflow
+  --partial     build anyway when an image will not resolve
+  --remote      reference the urls instead of embedding; ~8 KB html, no packing
+  --pack=N      cap embedded plates at N px wide, JPEG q88. Default 2400.
+  --no-pack     embed at full resolution. Measured 113 MB against 3.6 MB packed.
+```
 
 **It targets python 3.9**, which is what macOS ships, hence the
 `from __future__ import annotations` at the top. Do not remove it and do not reach for
-3.10-only syntax: this has to run on a stock machine with nothing set up. `PIL` is needed
-only for the downscale step above — where it is missing, `sips -Z 2400 <file>` does the
-same job on macOS.
+3.10-only syntax: this has to run on a stock machine with nothing set up. `PIL` is used
+for the downscale when it is there; where it is missing the builder falls back to `sips`,
+and where neither exists it says so and embeds full size rather than failing.
 
-Verified on a four-placement, four-resize set in both inline and `--remote` mode: **6
-pages** each — cover, four placements, social. The pages were read back as images to
-confirm the social page comes out at matched width on a shared bottom edge with the
-heights climbing, which is the one thing that page exists to demonstrate.
+Verified on a four-placement, four-resize set in inline, url-only and `--remote` mode:
+**6 pages** each — cover, four placements, social. Measured on that set: a url-only
+`deck.json` goes from urls to a checked 3.6 MB PDF in 2.5s. The pages were read back as
+images to confirm the social page comes out at matched width on a shared bottom edge with
+the heights climbing, which is the one thing that page exists to demonstrate.
 
 ```python
 #!/usr/bin/env python3
 """Pack a mockup-deck run into an A4-landscape annotated PDF.
 
-Usage:  python3 build_mockup_deck.py deck.json   ->  writes out.html beside it
+Usage:  python3 build_mockup_deck.py deck.json --check   ->  writes out.html beside it
+
+    --check      measure every page in headless Chrome; non-zero on overflow
+    --partial    build even though an image did not resolve (say which, if you use it)
+    --remote     reference the media urls instead of inlining; ~8 KB html, no packing
+    --pack=N     cap embedded plates at N px wide as JPEG q88. Default 2400.
+    --no-pack    embed at full resolution. Measured 113 MB against 3.6 MB packed.
 
 Then render:
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless \
-      --disable-gpu --no-pdf-header-footer --print-to-pdf="out.pdf" \
+      --disable-gpu --no-sandbox --no-pdf-header-footer --print-to-pdf="out.pdf" \
       --virtual-time-budget=25000 "file://$PWD/out.html"
 
 deck.json:
@@ -843,13 +929,13 @@ deck.json:
 
 Every image entry takes "file" (a local path), "url" (a media.flora.ai link), or both.
 A url with no local file is downloaded once into src/ and cached, so a deck.json of urls
-builds on its own with no curl step. Pass --remote to reference the urls instead: the html
-stays a few KB, which is what makes it handable on a surface with no filesystem. Media
-urls are public and unsigned, so they load for anyone.
+builds on its own with no curl step. Media urls are public and unsigned, so they load for
+anyone.
 
-Every section is conditional on its images resolving, so a partial set still builds a
-valid deck. Drop a missing placement in and re-run; it re-renders in about two seconds,
-so a layout tweak never costs a regeneration.
+A section whose images do not resolve is DROPPED, and the footers renumber over the gap --
+so a short deck looks like a complete one. That is why an unresolved image is named on
+stderr and exits non-zero rather than quietly shrinking the deck. Pass --partial when the
+set is genuinely incomplete and you mean to ship it anyway.
 """
 
 from __future__ import annotations  # macOS ships python 3.9; keeps `str | None` legal
@@ -859,6 +945,8 @@ import html
 import json
 import mimetypes
 import pathlib
+import re
+import subprocess
 import sys
 import urllib.request
 
@@ -871,6 +959,15 @@ USABLE_H = PAGE_H - 2 * MARGIN - FOOTER_H
 
 
 REMOTE = "--remote" in sys.argv  # reference media urls instead of inlining the bytes
+PARTIAL = "--partial" in sys.argv  # build anyway when an image will not resolve
+CHECK = "--check" in sys.argv  # measure every page in headless Chrome after building
+PACK = 0 if "--no-pack" in sys.argv else next(
+    (int(a.split("=")[1]) for a in sys.argv if a.startswith("--pack=")), 2400
+)
+
+CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+
+MISSES: list = []  # images that did not resolve; the run fails on these, see main()
 
 
 def embed(path: pathlib.Path) -> str | None:
@@ -901,6 +998,42 @@ def fetch(url: str, dest: pathlib.Path) -> pathlib.Path | None:
     return dest
 
 
+def pack(path: pathlib.Path, cap: int) -> pathlib.Path:
+    """Downscale one plate to `cap` px wide as JPEG q88, cached beside it in packed/.
+
+    Chrome re-embeds source images badly: measured on a four-placement set, 113 MB of
+    PDF from full-resolution 4k PNGs against 3.6 MB at 2400px -- 31x, with nothing lost,
+    since the widest slot in this layout resolves ~2185px at 300dpi. A deck nobody can
+    attach to an email is not a document you can send, so this is on by default.
+    """
+    if not path.exists():
+        return path
+    dest = path.parent / "packed" / (path.stem + ".jpg")
+    if dest.exists() and dest.stat().st_size > 0:
+        return dest
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        from PIL import Image  # optional: the only non-stdlib thing here, and it has a fallback
+
+        im = Image.open(path).convert("RGB")
+        if im.width > cap:
+            im = im.resize((cap, round(im.height * cap / im.width)), Image.LANCZOS)
+        im.save(dest, "JPEG", quality=88, optimize=True)
+        return dest
+    except ImportError:
+        pass
+    try:  # macOS ships sips, so a stock machine with no PIL still packs
+        subprocess.run(
+            ["sips", "-s", "format", "jpeg", "-s", "formatOptions", "88",
+             "-Z", str(cap), str(path), "--out", str(dest)],
+            capture_output=True, check=True, timeout=120,
+        )
+        return dest if dest.exists() else path
+    except (OSError, subprocess.SubprocessError):
+        print(f"  pack unavailable for {path.name} -- embedding full size", file=sys.stderr)
+        return path
+
+
 def src(item: dict, root: pathlib.Path) -> str | None:
     """Resolve one image to something an <img> can load.
 
@@ -911,17 +1044,24 @@ def src(item: dict, root: pathlib.Path) -> str | None:
     """
     url = item.get("url")
     if REMOTE:
+        if not url:
+            MISSES.append(f'{item.get("site") or item.get("use") or "creative"}: --remote needs a url')
         return url or None
-    if item.get("file"):
-        got = embed(root / item["file"])
-        if got:
-            return got
-    if url:
-        name = item.get("file") or url.rsplit("/", 1)[-1].split("?")[0]
-        got = fetch(url, root / "src" / pathlib.Path(name).name)
-        if got:
-            return embed(got)
-    return None
+    local = root / item["file"] if item.get("file") else None
+    if local is None or not local.exists():
+        if url:
+            name = item.get("file") or url.rsplit("/", 1)[-1].split("?")[0]
+            local = fetch(url, root / "src" / pathlib.Path(name).name)
+    if local is None or not local.exists():
+        MISSES.append(
+            f'{item.get("site") or item.get("use") or "creative"}: '
+            f'{item.get("file") or url or "no file and no url"}'
+        )
+        return None
+    got = embed(pack(local, PACK) if PACK else local)
+    if not got:
+        MISSES.append(f'{item.get("site") or item.get("use") or "creative"}: unreadable')
+    return got
 
 
 def esc(s: object) -> str:
@@ -1102,7 +1242,88 @@ def build(deck_path: pathlib.Path) -> pathlib.Path:
     return out
 
 
-if __name__ == "__main__":
+PROBE = """
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var out = [], pages = document.querySelectorAll('.page');
+  pages.forEach(function (pg, i) {
+    var cs = getComputedStyle(pg), r = pg.getBoundingClientRect();
+    var box = {l: r.left + parseFloat(cs.paddingLeft), t: r.top + parseFloat(cs.paddingTop),
+               rt: r.right - parseFloat(cs.paddingRight), b: r.bottom - parseFloat(cs.paddingBottom)};
+    if (pg.scrollHeight - pg.clientHeight > 1)
+      out.push('page ' + (i + 1) + '  SCROLL  +' + (pg.scrollHeight - pg.clientHeight).toFixed(0) + 'px');
+    pg.querySelectorAll('*').forEach(function (el) {
+      if (el.closest('.ftr')) return;
+      var b = el.getBoundingClientRect();
+      if (!b.width && !b.height) return;
+      var tag = el.tagName.toLowerCase() + (el.className ? '.' + String(el.className).split(' ')[0] : '');
+      [['left', box.l - b.left], ['top', box.t - b.top],
+       ['right', b.right - box.rt], ['bottom', b.bottom - box.b]].forEach(function (q) {
+        if (q[1] > 1) out.push('page ' + (i + 1) + '  OVERFLOW  ' + q[0] + ' +' + q[1].toFixed(1) + 'px  ' + tag);
+      });
+    });
+  });
+  var pre = document.createElement('pre');
+  pre.id = 'layoutcheck';
+  pre.textContent = out.length ? out.join('\\n') : 'PASS ' + pages.length + ' pages';
+  document.body.appendChild(pre);
+});
+</script>
+"""
+
+
+def check(out: pathlib.Path) -> bool:
+    """Walk every page in headless Chrome and report anything outside its content box.
+
+    Three seconds, and it reads a number instead of a screenshot. The layout loop is
+    where this skill's wall-clock actually goes -- render, squint at a thumbnail, guess
+    which rule is wrong, render again -- and almost none of those rounds are taste.
+    They are geometry: content taller than its page, a row wider than its column, a
+    plate sliding under the footer. Run this until it passes, THEN look once.
+    """
+    probed = out.resolve().parent / "_probe.html"
+    probed.write_text(out.read_text() + PROBE)
+    try:
+        dom = subprocess.run(
+            [CHROME, "--headless", "--disable-gpu", "--no-sandbox",
+             "--virtual-time-budget=20000", "--dump-dom", probed.as_uri()],
+            capture_output=True, text=True, timeout=300,
+        ).stdout
+    except (OSError, subprocess.SubprocessError) as exc:
+        print(f"layout check skipped: {exc}", file=sys.stderr)
+        return True
+    finally:
+        probed.unlink(missing_ok=True)
+    m = re.search(r'<pre id="layoutcheck">(.*?)</pre>', dom, re.S)
+    if not m:
+        print("layout check: no probe output -- the page did not load", file=sys.stderr)
+        return False
+    report = html.unescape(m.group(1).strip())
+    print(report, file=sys.stderr)
+    return report.startswith("PASS")
+
+
+def main() -> int:
     args = [a for a in sys.argv[1:] if not a.startswith("-")]
-    print(build(pathlib.Path(args[0] if args else "deck.json")))
+    out = build(pathlib.Path(args[0] if args else "deck.json"))
+    ok = True
+    if MISSES:
+        # A page whose image will not resolve is DROPPED and the footers renumber over
+        # the gap, so a short deck looks like a complete one. Never let that pass quietly.
+        print(f"\n{len(MISSES)} image(s) did not resolve:", file=sys.stderr)
+        for m in MISSES:
+            print(f"  {m}", file=sys.stderr)
+        if PARTIAL:
+            print("  --partial: building the deck without them", file=sys.stderr)
+        else:
+            print("  fix these or pass --partial to ship the deck without them", file=sys.stderr)
+            ok = False
+    if CHECK and not check(out):
+        ok = False
+    print(out)
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
 ```
