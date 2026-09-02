@@ -595,11 +595,15 @@ what you **asked for**, not a description of what came back.
 
 ```bash
 cd <project>/Deliverables
-python3 build_mockup_deck.py deck.json --check   # fetches, packs and measures, all in one
+HTML=$(python3 build_mockup_deck.py deck.json --check)   # fetches, packs, measures
 "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless \
-  --disable-gpu --no-sandbox --no-pdf-header-footer --print-to-pdf="<Name>-deck.pdf" \
-  --virtual-time-budget=25000 "file://$PWD/out.html"
+  --disable-gpu --no-sandbox --no-pdf-header-footer \
+  --print-to-pdf="${HTML%.html}.pdf" \
+  --virtual-time-budget=25000 "file://$PWD/$HTML"
 ```
+
+**Take the html path from the builder's stdout, as above.** It names the file after the
+work, so the deck and the PDF match without you retyping a title into a shell command.
 
 The builder is in the appendix at the foot of this file, and its docstring carries the
 `deck.json` shape. Put the placement urls straight into it — the builder downloads and
@@ -680,9 +684,9 @@ straight to "can't".** Chrome is how route 1 prints; it is not what makes the de
 possible.
 
 ```
-1  shell + Chrome     build, then print headless          -> a .pdf on disk
-2  shell, no Chrome   build, user opens out.html, Cmd-P   -> Save as PDF
-3  no filesystem      run --remote, hand over out.html    -> user prints it
+1  shell + Chrome     build, then print headless             -> a .pdf on disk
+2  shell, no Chrome   build, user opens the html, Cmd-P      -> Save as PDF
+3  no filesystem      run --remote, hand over the html       -> user prints it
 ```
 
 Route 2 costs nothing: `@page { size: A4 landscape }` is honoured by the browser's own
@@ -749,6 +753,40 @@ the project      https://app.flora.ai/projects/<project_id>
 Everything except the PDF is a url. Report the project link with the ids you resolved at
 the top of the run — not one reconstructed at the end, and not the workspace id, which is
 the substitution to watch for since both are long `_`-prefixed strings.
+
+### Where the files land
+
+On a surface with a filesystem, **always write to `<project>/Deliverables/`.** Create it
+if it is missing. Never leave the deck in a scratch or temp directory, never drop it in
+`~/Downloads`, and never leave it loose in the project root — across three live runs the
+deck landed in three different places and had to be hunted for.
+
+```
+the source    <project>/Deliverables/<Poster-Title>-deck.html
+the output    <project>/Deliverables/<Poster-Title>-deck.pdf
+the plates    <project>/Deliverables/<Poster-Title>-deck-assets/    fetched + packed
+```
+
+The builder derives all three from `title`, so they are consistent by construction and two
+runs coexist. **`Deliverables/` is shared by every run of this skill**, which is the whole
+reason the prefix is not decoration: a bare `out.html` or `assets/` in there belongs to
+nobody and the next deck silently overwrites it.
+
+**The fetch cache is keyed on the full url, not the filename.** Every run of this skill
+produces a gable, a transit, a shelter and a hoarding, so two decks in one folder collide
+on basename alone. Measured, before the urls were hashed in: two decks whose gables
+differed only by url both embedded the *first* run's plate, with no error and a clean
+layout check. A wrong plate is worse than a missing one — a missing one at least changes
+the page count.
+
+**Check what is already in `Deliverables/` before writing.** The filenames come from the
+title, so a re-run of the same poster lands on top of the previous one by construction. Say
+so rather than silently overwriting it.
+
+Write the **HTML source beside the PDF**. It re-renders through headless Chrome in
+seconds, so a layout tweak never costs a regeneration — that is the difference between a
+deck you can revise and one you have to rebuild. Ship the full-resolution plates alongside
+it too: the deck's copies are packed for reading, the originals are for using.
 
 Name the **work**, not the client — the poster's title, kebab-cased — and use it as the
 label when you report each url, so a user collecting several runs can tell them apart.
@@ -895,7 +933,7 @@ the heights climbing, which is the one thing that page exists to demonstrate.
 #!/usr/bin/env python3
 """Pack a mockup-deck run into an A4-landscape annotated PDF.
 
-Usage:  python3 build_mockup_deck.py deck.json --check   ->  writes out.html beside it
+Usage:  python3 build_mockup_deck.py deck.json --check  ->  <Title>-deck.html beside it
 
     --check      measure every page in headless Chrome; non-zero on overflow
     --partial    build even though an image did not resolve (say which, if you use it)
@@ -903,10 +941,16 @@ Usage:  python3 build_mockup_deck.py deck.json --check   ->  writes out.html bes
     --pack=N     cap embedded plates at N px wide as JPEG q88. Default 2400.
     --no-pack    embed at full resolution. Measured 113 MB against 3.6 MB packed.
 
-Then render:
+Artifacts are named after the work, since Deliverables/ is shared by every run:
+    <Title>-deck.html      the source, re-renders in ~2s
+    <Title>-deck.pdf       what you hand over
+    <Title>-deck-assets/   fetched originals under src/, downscaled under packed/
+
+Then render, taking the html path from this script's stdout:
+    HTML=$(python3 build_mockup_deck.py deck.json --check)
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless \
-      --disable-gpu --no-sandbox --no-pdf-header-footer --print-to-pdf="out.pdf" \
-      --virtual-time-budget=25000 "file://$PWD/out.html"
+      --disable-gpu --no-sandbox --no-pdf-header-footer \
+      --print-to-pdf="${HTML%.html}.pdf" --virtual-time-budget=25000 "file://$PWD/$HTML"
 
 deck.json:
 {
@@ -941,6 +985,7 @@ set is genuinely incomplete and you mean to ship it anyway.
 from __future__ import annotations  # macOS ships python 3.9; keeps `str | None` legal
 
 import base64
+import hashlib
 import html
 import json
 import mimetypes
@@ -968,6 +1013,7 @@ PACK = 0 if "--no-pack" in sys.argv else next(
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
 MISSES: list = []  # images that did not resolve; the run fails on these, see main()
+ASSETS: list = []  # one-element holder for this run's <Title>-deck-assets/ directory
 
 
 def embed(path: pathlib.Path) -> str | None:
@@ -998,6 +1044,27 @@ def fetch(url: str, dest: pathlib.Path) -> pathlib.Path | None:
     return dest
 
 
+def slug(title: str) -> str:
+    """'Many Hands' -> 'Many-Hands'. Names every artifact after the WORK."""
+    keep = "".join(c if (c.isalnum() or c in " -_") else "" for c in str(title or ""))
+    return "-".join(keep.split()) or "Untitled"
+
+
+def cache_name(url: str, hint: str) -> str:
+    """A cache filename that is unique to the URL, not just to its basename.
+
+    Every run of this skill produces a gable, a transit, a shelter and a hoarding, so
+    two decks built in the same folder collide on basename alone -- and the second run
+    silently embeds the FIRST run's plate. Measured: two decks whose gables differed
+    only by url both came out carrying the same image, with no error and a clean layout
+    check. A wrong plate is worse than a missing one; a missing one changes the page
+    count. Hashing the url is what makes the cache safe to share.
+    """
+    stem, dot, ext = pathlib.Path(hint).name.rpartition(".")
+    digest = hashlib.sha1(url.encode()).hexdigest()[:8]
+    return f"{stem or 'img'}-{digest}{dot}{ext or 'png'}"
+
+
 def pack(path: pathlib.Path, cap: int) -> pathlib.Path:
     """Downscale one plate to `cap` px wide as JPEG q88, cached beside it in packed/.
 
@@ -1008,7 +1075,7 @@ def pack(path: pathlib.Path, cap: int) -> pathlib.Path:
     """
     if not path.exists():
         return path
-    dest = path.parent / "packed" / (path.stem + ".jpg")
+    dest = ASSETS[0] / "packed" / (path.stem + ".jpg")
     if dest.exists() and dest.stat().st_size > 0:
         return dest
     dest.parent.mkdir(parents=True, exist_ok=True)
@@ -1050,8 +1117,8 @@ def src(item: dict, root: pathlib.Path) -> str | None:
     local = root / item["file"] if item.get("file") else None
     if local is None or not local.exists():
         if url:
-            name = item.get("file") or url.rsplit("/", 1)[-1].split("?")[0]
-            local = fetch(url, root / "src" / pathlib.Path(name).name)
+            hint = item.get("file") or url.rsplit("/", 1)[-1].split("?")[0]
+            local = fetch(url, ASSETS[0] / "src" / cache_name(url, hint))
     if local is None or not local.exists():
         MISSES.append(
             f'{item.get("site") or item.get("use") or "creative"}: '
@@ -1223,6 +1290,11 @@ h2 {{ font-size: 13pt; margin: 0 0 5mm; letter-spacing: .04em; }}
 def build(deck_path: pathlib.Path) -> pathlib.Path:
     deck = json.loads(deck_path.read_text())
     root = deck_path.parent
+    # Deliverables/ is shared by every run of this skill, so name each artifact after the
+    # work: Many-Hands-deck.html beside Many-Hands-deck-assets/. A bare out.html belongs
+    # to nobody, and the next run overwrites it without a word.
+    name = slug(deck.get("title"))
+    ASSETS[:] = [root / f"{name}-deck-assets"]
     pages, n = [], 1
     pages.append(cover(deck, root, n))
     for p in deck.get("placements") or []:
@@ -1234,7 +1306,7 @@ def build(deck_path: pathlib.Path) -> pathlib.Path:
     if page:
         n += 1
         pages.append(page)
-    out = root / "out.html"
+    out = root / f"{name}-deck.html"
     out.write_text(
         f"<!doctype html><meta charset=utf-8><title>{esc(deck.get('title'))}</title>"
         f"<style>{CSS}</style>{''.join(pages)}"
@@ -1321,6 +1393,7 @@ def main() -> int:
     if CHECK and not check(out):
         ok = False
     print(out)
+    print(f"  render to: {out.with_suffix('.pdf').name}", file=sys.stderr)
     return 0 if ok else 1
 
 
