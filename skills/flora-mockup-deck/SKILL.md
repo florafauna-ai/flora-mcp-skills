@@ -253,9 +253,10 @@ the project     https://app.flora.ai/projects/<project_id>
 one node        https://app.flora.ai/projects/<project_id>?focus=<node_id>
 ```
 
-`?focus=` opens the canvas centred on a single node — use it to point at a specific
-placement instead of making the reader hunt. Node ids come from
-`flora_list_canvas_nodes`.
+`?focus=` opens the canvas centred on a single node — use it in the **run report** to
+point at a specific placement instead of making the reader hunt. Node ids come from
+`flora_list_canvas_nodes`. It does not go in the PDF: the deck is client-facing, and a
+workspace link is dead to anyone outside it.
 
 **Only the placements are on the canvas.** `flora_generate` writes to the project;
 `flora_run_action` does not. The tool says so and it measures true — an action's output
@@ -805,9 +806,15 @@ One page per thing. Never grid placements two-up; a placement is the deliverable
 gets a page. **Every layout the skill produced appears in the deck** — if it was made,
 it ships.
 
-This is the page plan the builder implements. The footer carries `PROJECT` and `DATE` and
-nothing else — and `PROJECT` is the resolved `project_id`, linked, so the deck is
-traceable back to the canvas that made it a year from now.
+This is the page plan the builder implements. The footer carries the **title**, the
+**date** and the page number, and nothing else.
+
+**No project id and no canvas link anywhere in the rendered PDF.** The deck is a
+client-facing document and both are internal plumbing: `prj_a1b2c3…` means nothing to a
+media planner, and an `?focus=` link is dead to anyone outside the workspace — it reads as
+a broken link in a document that is otherwise finished. Keep the ids in the run report,
+which is where someone tracing the deck back to its canvas will actually look, and keep
+the deck itself something you can hand to a client unedited.
 
 ```
 1  COVER        title, one-paragraph standfirst, and a spec strip:
@@ -956,8 +963,6 @@ deck.json:
 {
   "title":       "Your Agents Joined",
   "standfirst":  "One paragraph. MUST say the creative is reproduced, never regenerated.",
-  "project_url": "https://app.flora.ai/projects/prj_...",
-  "project_id":  "prj_...",
   "date":        "2026-08-30",
   "creative":    {"file": "master.png", "px": "2048 x 1152", "ratio": "16:9",
                   "source": "SUPPLIED"},
@@ -965,8 +970,7 @@ deck.json:
                    "shot":  "85mm, compressed from down the road",
                    "light": "overcast, wet road holding reflection",
                    "moment":"one person stopped on the opposite kerb",
-                   "note":  "One sentence of plain observation.",
-                   "node_url": "https://app.flora.ai/projects/prj_...?focus=<node_id>"}],
+                   "note":  "One sentence of plain observation."}],
   "social":      [{"use": "MASTER", "ratio": "16:9", "file": "master.png"},
                   {"use": "FEED",   "ratio": "1:1",  "file": "feed.png"}]
 }
@@ -1145,14 +1149,15 @@ def ratio_to_hw(ratio: str) -> float:
 
 
 def footer(deck: dict, n: int) -> str:
-    """PROJECT and DATE are the only parameters in the chrome."""
-    url, pid = deck.get("project_url"), deck.get("project_id")
-    if url:
-        project = f'<a href="{esc(url)}">{esc(pid or url)}</a>'
-    else:
-        project = esc(pid or "—")
+    """TITLE and DATE are the only parameters in the chrome.
+
+    No project id and no canvas link. The deck is a client-facing document, and both
+    of those are internal plumbing: an id means nothing to a media planner, and a
+    canvas link is dead to anyone outside the workspace. Trace the deck back through
+    the run report, which is where the ids belong.
+    """
     return (
-        f'<div class="ftr"><span>PROJECT {project}</span>'
+        f'<div class="ftr"><span>{esc(deck.get("title", ""))}</span>'
         f'<span>{esc(deck.get("date", ""))}</span><span>{n}</span></div>'
     )
 
@@ -1195,18 +1200,12 @@ def placement(deck: dict, p: dict, root: pathlib.Path, n: int) -> str:
         if p.get(k.lower())
     )
     note = f'<p class="note">{esc(p["note"])}</p>' if p.get("note") else ""
-    link = (
-        f'<a class="node" href="{esc(p["node_url"])}">open on canvas</a>'
-        if p.get("node_url")
-        else ""
-    )
     return f"""<section class="page place">
   <div class="place-img"><img src="{img}"></div>
   <div class="place-col">
     <h2>{esc(p.get("site", ""))}</h2>
     <div class="brief">{brief}</div>
     {note}
-    {link}
   </div>
   {footer(deck, n)}
 </section>"""
@@ -1257,7 +1256,6 @@ img {{ display: block; max-width: 100%; max-height: 100%; object-fit: contain; }
         display: flex; justify-content: space-between; font-size: 7.5pt;
         letter-spacing: .08em; color: #8a8478; border-top: .3mm solid #ddd8cd;
         padding-top: 2mm; }}
-.ftr a {{ color: #8a8478; text-decoration: none; }}
 
 .cover {{ display: flex; gap: 12mm; align-items: center; }}
 .cover-txt {{ width: 40%; }}
@@ -1275,8 +1273,6 @@ h1 {{ font-size: 30pt; line-height: 1.05; margin: 0 0 6mm; letter-spacing: -.02e
 .place-col {{ width: 30%; }}
 h2 {{ font-size: 13pt; margin: 0 0 5mm; letter-spacing: .04em; }}
 .note {{ font-size: 8.5pt; line-height: 1.55; color: #4a443c; margin: 6mm 0 0; }}
-.node {{ display: inline-block; margin-top: 6mm; font-size: 7.5pt;
-         letter-spacing: .07em; color: #8a8478; }}
 
 .social .row {{ display: flex; align-items: flex-end; justify-content: flex-start; }}
 .social .cell {{ display: flex; flex-direction: column; justify-content: flex-end; }}
