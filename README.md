@@ -241,6 +241,7 @@ tenth the wall clock — and the gap widens linearly with the size of your list.
 | Skill | Use it when |
 |---|---|
 | **[flora-canvas-iterate](skills/flora-canvas-iterate/SKILL.md)** | The user refers to an existing project or canvas — "the hero images from last week", "what's in the Meridian project" — and wants to revise rather than start over. |
+| **[flora-open-project](skills/flora-open-project/SKILL.md)** | You are starting a session on one specific canvas — from a workspace and project id, a pasted link, or FLORA's "Open in agent" button. Signs an in-harness browser (Claude Code Desktop, Cowork) into the canvas with WebMCP via `flora_open_project`, or falls back to the hosted tools, then reads the canvas and offers starters or two ways to continue. |
 
 ★ = flagship, most heavily tested.
 
