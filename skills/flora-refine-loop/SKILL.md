@@ -14,6 +14,10 @@ description: >
 
 # flora-refine-loop
 
+Hosted MCP generation inputs are plural: call `flora_create_generations` with `{ "generations": [{ "workspace_id": "ws_…", "project_id": "prj_…", "type": "image", "prompt": "…" }] }` (1–20 items). Put per-generation fields, including optional `model`, `params`, and `reference_node_ids`, inside each item. Read `generations[]` in the response; retain successful entries' `run_id` and handle failures individually. Poll `flora_list_generations` with `{ "run_ids": ["run_…"] }`, even for one run; add `technique_id` for technique runs. Never retry successful items because another item failed.
+
+Use dedicated tools for this workflow, including batches. `execute` is deprecated; use it only for an SDK operation without a dedicated tool. SDK examples below describe orchestration: use the corresponding dedicated tools, issue independent calls concurrently, retain every run id, and poll in later calls. Do not choose `execute` just to combine calls.
+
 ## What it is
 
 **A stopping rule with a generator attached.** Anyone can regenerate. The hard part —
@@ -261,12 +265,10 @@ budget cap            agreed with the user BEFORE round 1, and enforced.
 same defect twice     is a model limitation. Stop and escalate; do not re-roll.
 seed                  same prompt + same seed produced different images. Not a pin.
 
-SANDBOX
-split the rounds      a full loop (generate + judge + generate + judge) can exceed the
-                      code sandbox gateway and return a 502. Run one round per execute
-                      call, returning the candidate url and the judgement each time.
-                      Variables do not persist — carry the goal and the defect forward
-                      explicitly.
+TOOL CALLS
+split the rounds      use flora_create_generations and flora_list_generations for each candidate and judge.
+                      Keep the candidate URL and judgement before starting the next round.
+                      Carry the goal and the defect forward explicitly.
 
 COST
 judge free, gen paid  so judge everything and generate reluctantly.

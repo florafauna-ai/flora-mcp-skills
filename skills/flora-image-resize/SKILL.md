@@ -17,6 +17,10 @@ description: >
 
 # FLORA Generative Image Resize
 
+Hosted MCP generation inputs are plural: call `flora_create_generations` with `{ "generations": [{ "workspace_id": "ws_…", "project_id": "prj_…", "type": "image", "prompt": "…" }] }` (1–20 items). Put per-generation fields, including optional `model`, `params`, and `reference_node_ids`, inside each item. Read `generations[]` in the response; retain successful entries' `run_id` and handle failures individually. Poll `flora_list_generations` with `{ "run_ids": ["run_…"] }`, even for one run; add `technique_id` for technique runs. Never retry successful items because another item failed.
+
+Use dedicated tools for this workflow, including batches. `execute` is deprecated; use it only for an SDK operation without a dedicated tool. SDK examples below describe orchestration: use the corresponding dedicated tools, issue independent calls concurrently, retain every run id, and poll in later calls. Do not choose `execute` just to combine calls.
+
 One source image into every placement's aspect ratio, generatively — no bars, no
 crop that loses the subject.
 
@@ -37,11 +41,19 @@ the targets — default set: 9:16, 16:9, 1:1.
 
 ## The source goes in `params`, and that is not true of video
 
-`flora_generate` **does** accept an i2i source through `params.image_url`:
+`flora_create_generations` **does** accept an i2i source through `params.image_url`:
 
 ```json
-{ "model": "i2i-qwen-image-edit", "type": "image",
-  "params": { "aspect_ratio": "9:16", "image_url": "https://…/source.png" } }
+{
+  "generations": [{
+    "workspace_id": "ws_…",
+    "project_id": "prj_…",
+    "model": "i2i-qwen-image-edit",
+    "type": "image",
+    "prompt": "Reframe this image to 9:16. Preserve the subject, props, palette, lighting and grade.",
+    "params": { "aspect_ratio": "9:16", "image_url": "https://media.flora.ai/source.png" }
+  }]
+}
 ```
 
 Verified — a 1024×1024 source returned 864×1536 with the subject, every prop, the
@@ -92,7 +104,7 @@ small delta with the free `change-image-ar-browser` action. Never ask the model 
    background, the grade, and every text string verbatim. These go in the prompt —
    the model is rebuilding the frame and will drop anything you do not name.
 2. **Pick the ratios.** Default 9:16, 16:9, 1:1. Derive 4:5 from 3:4.
-3. **Fire all ratios concurrently** through `flora_generate` with
+3. **Fire all ratios concurrently** through `flora_create_generations` with
    `params.image_url` and `params.aspect_ratio`. Concurrent is one wait; sequential
    is N waits, and each run is ~25s.
 4. **Prompt, one per ratio:**
@@ -104,7 +116,7 @@ small delta with the free `change-image-ar-browser` action. Never ask the model 
      left and right}, continuing {name the surface or backdrop}.`
    - Lock the type: `Reproduce all text and logos glyph for glyph: {each string}.`
    - Close: `Do not restyle, recolour, or replace the subject.`
-5. **Poll** with `flora_get_run`. The output URL may land under `node-inputs/`
+5. **Poll** with `flora_list_generations`. The output URL may land under `node-inputs/`
    rather than `node-outputs/` — that is normal for an i2i result, not an error.
 
 ## Verification

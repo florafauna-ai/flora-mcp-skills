@@ -13,6 +13,10 @@ description: >
 
 # flora-batch-generate
 
+Hosted MCP generation inputs are plural: call `flora_create_generations` with `{ "generations": [{ "workspace_id": "ws_…", "project_id": "prj_…", "type": "image", "prompt": "…" }] }` (1–20 items). Put per-generation fields, including optional `model`, `params`, and `reference_node_ids`, inside each item. Read `generations[]` in the response; retain successful entries' `run_id` and handle failures individually. Poll `flora_list_generations` with `{ "run_ids": ["run_…"] }`, even for one run; add `technique_id` for technique runs. Never retry successful items because another item failed.
+
+Use dedicated tools for this workflow, including batches. `execute` is deprecated; use it only for an SDK operation without a dedicated tool. SDK examples below describe orchestration: use the corresponding dedicated tools, issue independent calls concurrently, retain every run id, and poll in later calls. Do not choose `execute` just to combine calls.
+
 ## What it is
 
 Not a faster chatbot. **A pipeline.** The user hands over a list; the list comes back
@@ -57,9 +61,9 @@ the user cannot tell which axis moved.
 
 ## The four phases
 
-Plan, fire, poll, settle. They are separate because **the sandbox will not hold all
-four for a slow model** — see Gotchas. Keep them as separate `execute` calls and the
-skill survives any batch size.
+Plan, fire, poll, settle. Submit up to 20 independent requests per
+`flora_create_generations` call. Retain every successful run id, then poll with
+`flora_list_generations` in later calls. Do not hold a sandbox open waiting for a batch to finish.
 
 ---
 

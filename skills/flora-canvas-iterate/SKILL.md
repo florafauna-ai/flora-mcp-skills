@@ -5,6 +5,10 @@ description: Find and build on work that already exists in a FLORA project — i
 
 # Iterate on existing FLORA work
 
+Hosted MCP generation inputs are plural: call `flora_create_generations` with `{ "generations": [{ "workspace_id": "ws_…", "project_id": "prj_…", "type": "image", "prompt": "…" }] }` (1–20 items). Put per-generation fields, including optional `model`, `params`, and `reference_node_ids`, inside each item. Read `generations[]` in the response; retain successful entries' `run_id` and handle failures individually. Poll `flora_list_generations` with `{ "run_ids": ["run_…"] }`, even for one run; add `technique_id` for technique runs. Never retry successful items because another item failed.
+
+Use dedicated tools for this workflow, including batches. `execute` is deprecated; use it only for an SDK operation without a dedicated tool. SDK examples below describe orchestration: use the corresponding dedicated tools, issue independent calls concurrently, retain every run id, and poll in later calls. Do not choose `execute` just to combine calls.
+
 A FLORA project outlives the conversation. Its canvas, every generation, and the
 cost of each are all still there, so revision starts from what exists rather than
 from a blank prompt.
@@ -26,7 +30,7 @@ from a blank prompt.
    "Two hero images, both generated Tuesday" is confirmable; "the ones you meant"
    is not.
 
-4. **Apply the change.** Regenerate with `flora_generate`, or re-run the original
+4. **Apply the change.** Regenerate with `flora_create_generations`, or re-run the original
    technique with `flora_run_technique` when the asset came from one —
    `flora_list_technique_runs` shows which technique produced what.
 

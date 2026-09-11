@@ -16,6 +16,10 @@ description: >
 
 # flora-mockup-deck
 
+Hosted MCP generation inputs are plural: call `flora_create_generations` with `{ "generations": [{ "workspace_id": "ws_…", "project_id": "prj_…", "type": "image", "prompt": "…" }] }` (1–20 items). Put per-generation fields, including optional `model`, `params`, and `reference_node_ids`, inside each item. Read `generations[]` in the response; retain successful entries' `run_id` and handle failures individually. Poll `flora_list_generations` with `{ "run_ids": ["run_…"] }`, even for one run; add `technique_id` for technique runs. Never retry successful items because another item failed.
+
+Use dedicated tools for this workflow, including batches. `execute` is deprecated; use it only for an SDK operation without a dedicated tool. SDK examples below describe orchestration: use the corresponding dedicated tools, issue independent calls concurrently, retain every run id, and poll in later calls. Do not choose `execute` just to combine calls.
+
 > **Attribution.** Pass `skill: "flora-mockup-deck"` on every FLORA call you make while
 > running this skill — `execute` included — along with a `skill_run_id` you invent
 > once when the run starts and reuse for the rest of it. Both are reporting only:
@@ -49,11 +53,19 @@ one image, that image becomes the master creative, and the law closes over it.
 
 ### Making the master
 
-One `flora_generate`, text-to-image, same model family as the placements:
+One `flora_create_generations`, text-to-image, same model family as the placements:
 
-```
-model   "t2i-gpt-image-2-t2i"
-params  { aspect_ratio, resolution: "4k", quality: "high" }
+```json
+{
+  "generations": [{
+    "workspace_id": "ws_…",
+    "project_id": "prj_…",
+    "type": "image",
+    "model": "t2i-gpt-image-2-t2i",
+    "prompt": "A finished out-of-home poster, flat artwork filling the frame. Apply the user's subject, headline and brand direction.",
+    "params": { "aspect_ratio": "3:4", "resolution": "4k", "quality": "high" }
+  }]
+}
 ```
 
 **Prompt it as a printed poster, not as a photograph of a thing.** The text names a
@@ -177,8 +189,9 @@ arrives as a url and needs no upload step. Never base64-encode the file and neve
 upload bytes; if a supplied artwork genuinely has no url, say so and ask the user to add
 it to their FLORA project.
 
-You do not wire the artwork to anything. Each placement is its own `flora_generate`
-call carrying the artwork url in `params.image_url`.
+You do not wire the artwork to anything. Each placement is an item in one
+`flora_create_generations` batch, carrying the artwork URL in that item's
+`params.image_url`, along with its workspace_id, project_id, type, model and prompt.
 
 Default placements, chosen because they are four genuinely different media buys:
 
@@ -195,7 +208,7 @@ artwork across two planes and was the worst result of the whole test set.
 
 ## Resolve the ids once, before you spend anything
 
-**`flora_generate` requires `project_id`.** It is not optional and there is no default.
+**`flora_create_generations` requires `project_id`.** It is not optional and there is no default.
 An agent that has not decided on a project has to produce one at fire time, and what it
 produces is a guess — the most recently touched project from `flora_list_projects`, or a
 plausible-looking `prj_` string. Both are wrong, and neither errors in a way that looks
@@ -258,7 +271,7 @@ point at a specific placement instead of making the reader hunt. Node ids come f
 `flora_list_canvas_nodes`. It does not go in the PDF: the deck is client-facing, and a
 workspace link is dead to anyone outside it.
 
-**Only the placements are on the canvas.** `flora_generate` writes to the project;
+**Only the placements are on the canvas.** `flora_create_generations` writes to the project;
 `flora_run_action` does not. The tool says so and it measures true — an action's output
 lands under `media.flora.ai/code-sandbox/...` and never appears in
 `flora_list_canvas_nodes` for the project it was scoped to. On an action run `project_id`
@@ -345,13 +358,14 @@ GPT Image 2      4k   ~107s      <- 4k costs nothing over 2k
 a batch of four taking **10–15 minutes** with the identical setup. Do not promise a
 runtime. What you control is not adding delay of your own:
 
-- **Fire all placements in one pass with no gap between them.** One `flora_generate`
-  call per placement, each with `model: "i2i-gpt-image-2-i2i"` and
+- **Fire all placements in one pass with no gap between them.** One `flora_create_generations`
+  call with a `generations` item per placement, each with workspace_id, project_id,
+  type: "image", its full placement prompt, `model: "i2i-gpt-image-2-i2i"` and
   `params: { image_url, resolution: "4k" }`. Do not stagger on a timer — that converts
   a one-generation wait into an N-generation wait for nothing.
 - **Fire the resizes in the same pass** if any need generating. They share no dependency.
 - Only the contact sheet waits, because it needs the images.
-- **Poll once, centrally.** One `flora_list_generations` call filtered to the project
+- **Poll once, centrally.** One `flora_list_generations` call with `run_ids` containing the successful submissions' IDs
   covers every placement at once. Do not poll each run separately — that turns one wait
   into N waits for nothing.
 
@@ -513,22 +527,16 @@ The four sites, fixed — chosen because they are genuinely different media buys
 
 ```
 API SHAPE
-flora_generate        the ONLY way to run a generation. Returns a run_id; poll it with
-                      flora_get_run. Wiring nodes with flora_add_to_canvas creates them
-                      INERT — nothing on this server runs a wired generation node, so
-                      never expect a canvas patch to fire anything.
+flora_create_generations starts an array of independent requests. Each successful entry
+                      returns a run_id. Poll those ids with flora_list_generations.
+                      Start existing wired nodes with flora_run_canvas_nodes.
 params.image_url      the input image for an i2i model, as a SINGLE STRING. This is the
                       whole image-to-image mechanism.
                       params.image_urls (plural, array) is accepted without complaint,
                       silently IGNORED, and still billed — you get a text-to-image
                       render of the prompt with the creative nowhere in it. Measured.
-flora_get_run         DO NOT poll a batch with this. It can report status "running" and
-                      progress 0 for a run that has already finished — measured at 16
-                      MINUTES of "running" on a run whose own record showed
-                      started_at -> completed_at 120s apart, with outputs present the
-                      whole time. A loop waiting for it to flip never exits.
-run status            poll flora_list_generations filtered to the project instead: one
-                      call covers the whole batch and reports terminal state. Key on
+run status            poll flora_list_generations with run_ids for exact runs, or filter
+                      history by project. One call covers the batch. Key on
                       status == "completed" AND outputs being present — completed_at on
                       its own does not mean done, and neither does a "running" status
                       mean it is not.
@@ -550,12 +558,12 @@ flora_create_project  works in some workspaces and 400s in others on the SAME ac
                       that refuses actions.
 flora_list_canvas_nodes  returns media nodes with their asset urls. Use
                       flora_get_canvas for structure and how nodes connect.
-ids                   project_id is REQUIRED on flora_generate, and it must belong to
+ids                   project_id is REQUIRED on flora_create_generations, and it must belong to
                       the workspace you pass, or: 400 input_validation_error "Project
                       does not belong to the specified workspace."
 credits               every placement bills. State the total and get a yes before the
                       first call. Nothing is refundable and retries bill again.
-                      The charged_cost flora_generate returns AT FIRE TIME UNDERSTATES
+                      The charged_cost flora_create_generations returns AT FIRE TIME UNDERSTATES
                       the bill: measured 0.253 quoted against 0.873 actually charged,
                       3.45x. Quote from a completed run's charged_cost, or say plainly
                       that the figure is a floor. Four 4k placements are ~$3.50, not ~$1.
@@ -743,8 +751,8 @@ is a text parameter on the label pass, never a template edit.
 ## Naming and what comes back
 
 ```
-the master       one url, from flora_generate — WRITTEN path only
-the placements   four urls, one per site, from flora_generate — ON the canvas
+the master       one url, from flora_create_generations — WRITTEN path only
+the placements   four urls, one per site, from flora_create_generations — ON the canvas
 the resizes      three urls, from flora_run_action — NOT on the canvas
 the contact      one url, from side-by-side-composite-browser — NOT on the canvas
 the deck         a local .pdf path, built by the deck builder

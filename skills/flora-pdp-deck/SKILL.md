@@ -14,6 +14,10 @@ description: >
 
 # flora-pdp-deck
 
+Hosted MCP generation inputs are plural: call `flora_create_generations` with `{ "generations": [{ "workspace_id": "ws_…", "project_id": "prj_…", "type": "image", "prompt": "…" }] }` (1–20 items). Put per-generation fields, including optional `model`, `params`, and `reference_node_ids`, inside each item. Read `generations[]` in the response; retain successful entries' `run_id` and handle failures individually. Poll `flora_list_generations` with `{ "run_ids": ["run_…"] }`, even for one run; add `technique_id` for technique runs. Never retry successful items because another item failed.
+
+Use dedicated tools for this workflow, including batches. `execute` is deprecated; use it only for an SDK operation without a dedicated tool. SDK examples below describe orchestration: use the corresponding dedicated tools, issue independent calls concurrently, retain every run id, and poll in later calls. Do not choose `execute` just to combine calls.
+
 Self-contained. The deck builder is at the foot of this file; write it out and run it.
 
 ## What it is
@@ -102,7 +106,7 @@ image down and look at it before spending on it.
 
 ## Two references through a one-image API
 
-Hosted `flora_generate` takes **one** `image_url`. `params.image_urls` plural is
+Hosted `flora_create_generations` takes **one** `image_url`. `params.image_urls` plural is
 accepted, silently ignored, and still billed.
 
 To get a product *and* a model into one frame, stitch them into a single sheet first
@@ -253,7 +257,7 @@ generation runs.
 
 **Never conclude anything from elapsed poll time.** Do not re-fire, do not report a
 hang, do not tell the user it is stuck. Poll `flora_list_generations`, not
-`flora_get_run`. When it lands, read `completed_at` and report *that* as the duration.
+`flora_list_generations`. When it lands, read `completed_at` and report *that* as the duration.
 Tell the user the queue is opaque and the wait is not the work.
 
 ## De-branding
@@ -336,13 +340,11 @@ techniques             a declared imageUrl input may be IGNORED. One returned 8 
                        the branded product it was authored on, status completed, no
                        warning. Its output ids named that product -- read them first.
                        Probe once and LOOK before routing a set through it.
-technique outputs      absent from flora_list_technique_runs. Use execute ->
-                       client.techniques.runs.retrieve(runId, {techniqueId}).
-flora_get_run          500s on a TECHNIQUE run despite claiming to poll them. Works for
-                       actions. Lags badly for generations.
+technique outputs      poll flora_list_generations with run_ids and technique_id.
+                       flora_list_technique_runs also returns past runs and outputs.
 flora_run_technique    takes no project_id -- it creates its OWN project.
-wired gen nodes        INERT. flora_add_to_canvas creates them; nothing runs one.
-                       flora_run_canvas_action runs ACTION nodes only, credit-free.
+wired gen nodes        flora_add_to_canvas creates them idle. Start generation nodes
+                       with flora_run_canvas_nodes; use flora_run_canvas_action for actions.
 flora_add_to_canvas    add-only. Re-declaring an existing id creates a SECOND node and
                        warns. A 200 with warnings is not a clean apply.
 flora_get_canvas       its diagram is a picture, not a document. Sending it back
