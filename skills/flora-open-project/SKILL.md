@@ -5,6 +5,10 @@ description: Open a specific FLORA project canvas and get oriented before doing 
 
 # Open a FLORA project
 
+Hosted MCP generation inputs are plural: call `flora_create_generations` with `{ "generations": [{ "workspace_id": "ws_…", "project_id": "prj_…", "type": "image", "prompt": "…" }] }` (1–20 items). Put per-generation fields, including optional `model`, `params`, and `reference_node_ids`, inside each item. Read `generations[]` in the response; retain successful entries' `run_id` and handle failures individually. Poll `flora_list_generations` with `{ "run_ids": ["run_…"] }`, even for one run; add `technique_id` for technique runs. Never retry successful items because another item failed.
+
+Use dedicated tools for this workflow, including batches. `execute` is deprecated; use it only for an SDK operation without a dedicated tool. SDK examples below describe orchestration: use the corresponding dedicated tools, issue independent calls concurrently, retain every run id, and poll in later calls. Do not choose `execute` just to combine calls.
+
 **The law: the sign-in link is a session, not a URL.** It opens once, in a tab
 the agent controls, and appears nowhere else — not in a reply, not in a log.
 
@@ -28,7 +32,7 @@ has already read.
 2. **Check for an in-harness browser with WebMCP.** Some hosts give the agent
    its own browser tab and a JavaScript tool (Claude Code Desktop and Claude
    Cowork do; others may). The test is capability, not host name: can you open
-   a URL in a tab you control *and* run JavaScript in that page? If yes, take
+   a URL in a tab you control _and_ run JavaScript in that page? If yes, take
    the browser path; if no, take the hosted path. Do not guess — a host that
    only has a fetch/HTTP tool has no browser.
 
@@ -47,6 +51,8 @@ has already read.
      then read `window.__r.a` (`structuredContent` holds the parsed result).
    - Typical flow: `flora_get_canvas` → `flora_add_nodes` → `flora_generate`
      (pass `expected_project_id`) → `flora_wait_for_generation`.
+     The in-page tools have their own names and inputs; hosted
+     `flora_create_generations` is not an in-page tool.
    - `spend_approval_pending` means an approval dialog is open in the tab; only
      the user can accept it. Ask them, then retry.
    - Do not attach a separate FLORA pane or use look-alike plugin tools

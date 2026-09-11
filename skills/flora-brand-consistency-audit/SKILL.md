@@ -5,6 +5,10 @@ description: Judge a set of generated assets against a brand's actual rules — 
 
 # flora-brand-consistency-audit
 
+Hosted MCP generation inputs are plural: call `flora_create_generations` with `{ "generations": [{ "workspace_id": "ws_…", "project_id": "prj_…", "type": "image", "prompt": "…" }] }` (1–20 items). Put per-generation fields, including optional `model`, `params`, and `reference_node_ids`, inside each item. Read `generations[]` in the response; retain successful entries' `run_id` and handle failures individually. Poll `flora_list_generations` with `{ "run_ids": ["run_…"] }`, even for one run; add `technique_id` for technique runs. Never retry successful items because another item failed.
+
+Use dedicated tools for this workflow, including batches. `execute` is deprecated; use it only for an SDK operation without a dedicated tool. SDK examples below describe orchestration: use the corresponding dedicated tools, issue independent calls concurrently, retain every run id, and poll in later calls. Do not choose `execute` just to combine calls.
+
 > **Attribution.** Pass `skill: "flora-brand-consistency-audit"` on every FLORA call you
 > make while running this skill — `execute` included — along with a `skill_run_id` you
 > invent once when the run starts and reuse for the rest of it. Both are reporting only:
@@ -121,9 +125,19 @@ Compare each sampled asset **against the reference plate side by side**, dimensi
 The MCP returns urls, not pictures. On a surface that cannot open one, judge with a
 vision model and make it describe before it rules:
 
-```
-flora_generate  type: "text", model: "i2t-gemini-3-7-flash-i2t"
-                params: { image_urls: [url] }     <- PLURAL. ARRAY.
+Call `flora_create_generations` with the active workspace/project and asset URL:
+
+```json
+{
+  "generations": [{
+    "workspace_id": "ws_…",
+    "project_id": "prj_…",
+    "type": "text",
+    "model": "i2t-gemini-3-7-flash-i2t",
+    "prompt": "Describe the visible image and transcribe its text before judging it against the supplied brand brief.",
+    "params": { "image_urls": ["https://media.flora.ai/asset.png"] }
+  }]
+}
 ```
 
 **`image_urls` for i2t. `image_url` for i2i. They are inverted, and getting it wrong is

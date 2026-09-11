@@ -8,8 +8,11 @@ text, run saved multi-step techniques, and read and write a FLORA canvas. That i
 raw capability. **This repo is the judgment layer**: when to use which model, what the
 gotchas are, what a good result looks like, and what to do when one comes back wrong.
 
-Every skill here is hand-tested against production. Numbers in them are measured, not
-estimated.
+Skills document tested workflows and measured observations. Model behavior and tool
+availability can change; check the connected server before following an example.
+
+This repository is the public distribution mirror. FLORA maintainers author skills in
+`packages/skills-ts/skills/` in the monorepo and publish reviewed updates here manually.
 
 ---
 
@@ -57,7 +60,7 @@ codex mcp add flora --transport http https://agents.flora.ai/mcp
 The server is the capability; the skills are how your agent knows what to do with it.
 
 **Claude Code — one command, skills and server together.** This repo is also a plugin
-marketplace, so installing it wires up the MCP server *and* every skill:
+marketplace, so installing it wires up the MCP server _and_ every skill:
 
 ```bash
 claude plugin marketplace add florafauna-ai/flora-mcp-skills
@@ -75,13 +78,13 @@ cp -r flora-mcp-skills/skills/* .cursor/rules/       # Cursor
 **Claude.ai — there is no plugin install, so pick one of three.** `claude plugin` is
 Claude Code only; on web and desktop the skills go in by hand.
 
-*A Project, if you use FLORA regularly.* Create a Project, open **Set custom
+_A Project, if you use FLORA regularly._ Create a Project, open **Set custom
 instructions**, and paste in the contents of the skill you want — for example
 [`skills/flora-batch-generate/SKILL.md`](skills/flora-batch-generate/SKILL.md). Every
 chat inside that Project then has it, with nothing to re-paste. This is the most
 reliable option and it costs nothing.
 
-*Upload it as a Skill, for something reusable across Projects.* Claude.ai takes a
+_Upload it as a Skill, for something reusable across Projects._ Claude.ai takes a
 zipped skill folder, and this repo's layout is already the right shape — one directory
 per skill with a `SKILL.md` inside it. Zip the one you want:
 
@@ -93,7 +96,7 @@ cd flora-mcp-skills/skills && zip -r flora-batch-generate.zip flora-batch-genera
 Then upload it from Claude's settings, under skills/capabilities. Zipping from the repo
 rather than downloading a prebuilt archive means you always get the current version.
 
-*Or just ask for it inline* — see the raw-URL option below, which needs no setup at all
+_Or just ask for it inline_ — see the raw-URL option below, which needs no setup at all
 and works in a normal chat.
 
 **Or no install at all** — point your agent straight at one skill:
@@ -176,72 +179,72 @@ tenth the wall clock — and the gap widens linearly with the size of your list.
 
 ### Scale — many items, one treatment
 
-| Skill | Use it when |
-|---|---|
+| Skill                                                              | Use it when                                                                                                                                                                                                                                                    |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **[flora-batch-generate](skills/flora-batch-generate/SKILL.md)** ★ | You have a list — products, SKUs, campaign variants, localisations, scenes — and want one asset per row under a single consistent style. Handles parallel firing, batch polling, per-item variables, partial failure and retry classification. **Start here.** |
 
 ### Refine — get one thing right, without burning credits
 
-| Skill | Use it when |
-|---|---|
+| Skill                                                        | Use it when                                                                                                                                                                                                                                                                                                                                                       |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **[flora-refine-loop](skills/flora-refine-loop/SKILL.md)** ★ | The first result is wrong and you need to drive it to a specific goal — "that's not quite right", "closer, but the X is off". Uses a **free** vision judge to name the defect, changes the prompt to fix it, and stops when the goal is met or the defect stops moving. Reach for this the moment someone is re-running the same prompt hoping for a better roll. |
 
 ### Composite — animate what already exists
 
-| Skill | Use it when |
-|---|---|
+| Skill                                                                  | Use it when                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **[flora-motion-compositor](skills/flora-motion-compositor/SKILL.md)** | The subject already exists — a UI screenshot, a logo, a product photo, a Figma export — and you need real motion-graphics shots of it: 3D-tilted screens, staggered type reveals, camera moves, grade. Nothing is generated; every pixel comes from a file or a font, so type is pin-sharp, spelling is correct, and two renders of a scene are byte-identical. Renders from a JSON scene graph at **0 credits and ~12s a shot**, which makes re-rendering a whole film after a design change free. |
 
 ### Sequence — script to moving pictures
 
-| Skill | Use it when |
-|---|---|
+| Skill                                                              | Use it when                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **[flora-script-to-video](skills/flora-script-to-video/SKILL.md)** | You have a script or narrative and want animated clips. Staged pipeline with approval gates — script → shot list → consistent keyframes → motion — because a clip costs 30–90x its keyframe, so a drifted still must be caught before it is animated. Delivers ordered clip URLs, not a finished cut. |
 
 ### Transform — you already have the image
 
-| Skill | Use it when |
-|---|---|
+| Skill                                                          | Use it when                                                                                                                             |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | **[flora-run-technique](skills/flora-run-technique/SKILL.md)** | You want a saved multi-step FLORA workflow applied to a source image — background swap, relight, upscale, model swap, sketch-to-render. |
 
 ### Reformat — one asset, every placement
 
-| Skill | Use it when |
-| --- | --- |
+| Skill                                                        | Use it when                                                                                                                                                                                                                                                                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **[flora-video-resize](skills/flora-video-resize/SKILL.md)** | You have one finished video and need it in every placement's aspect ratio — 9:16, 16:9, 4:5, 1:1 — without black bars or a crop that loses the subject. Generatively reframes through FLORA's video-to-video models, holding subject, wardrobe, motion, lighting, grade, on-screen text and timing from the source. |
-| **[flora-image-resize](skills/flora-image-resize/SKILL.md)** | Same job for a still. Reframes one image into other ratios through `i2i-qwen-image-edit`, holding subject, props, palette and grade. States plainly that it re-renders the frame rather than extending it, so an already-approved asset should be padded with the free AR action instead. |
+| **[flora-image-resize](skills/flora-image-resize/SKILL.md)** | Same job for a still. Reframes one image into other ratios through `i2i-qwen-image-edit`, holding subject, props, palette and grade. States plainly that it re-renders the frame rather than extending it, so an already-approved asset should be padded with the free AR action instead.                           |
 
 ### Present — turn finished work into a deliverable
 
-| Skill | Use it when |
-|---|---|
+| Skill                                                      | Use it when                                                                                                                                                                                                                                                                                                                                                                                 |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **[flora-mockup-deck](skills/flora-mockup-deck/SKILL.md)** | You have a finished ad creative and need it placed in the world — out-of-home placements, social resizes, and an annotated A4 PDF with the brief printed beside each placement. The artwork is reproduced exactly and never regenerated. Also takes a written brief instead of artwork — "a campaign deck of a flower" — and generates the master creative first, for one extra generation. |
-| **[flora-pdp-deck](skills/flora-pdp-deck/SKILL.md)** | You have a product photo — and a model frame if you're lucky — and need a shoppable set: studio plates, on-model views, and an A4 deck. Works from a single image, and says plainly what one image can and cannot buy you. |
+| **[flora-pdp-deck](skills/flora-pdp-deck/SKILL.md)**       | You have a product photo — and a model frame if you're lucky — and need a shoppable set: studio plates, on-model views, and an A4 deck. Works from a single image, and says plainly what one image can and cannot buy you.                                                                                                                                                                  |
 
 ### Ship — all the way to the ad platform
 
-| Skill | Use it when |
-|---|---|
-| **[flora-brand-ad-pipeline](skills/flora-brand-ad-pipeline/SKILL.md)** | A product launch needs creative *and* everything after it — generation under a locked brand treatment, then Drive for archive, then Supabase for hosting, then Meta Ads creatives left **paused** for a human. The brand is an input, not an instruction: it lives in a saved technique, a reference image and a `brand.json`, never in prose an agent retypes. Pipeline state lives in a manifest, so a re-run repairs rather than duplicates. |
+| Skill                                                                  | Use it when                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **[flora-brand-ad-pipeline](skills/flora-brand-ad-pipeline/SKILL.md)** | A product launch needs creative _and_ everything after it — generation under a locked brand treatment, then Drive for archive, then Supabase for hosting, then Meta Ads creatives left **paused** for a human. The brand is an input, not an instruction: it lives in a saved technique, a reference image and a `brand.json`, never in prose an agent retypes. Pipeline state lives in a manifest, so a re-run repairs rather than duplicates. |
 
 ### Watch — keep a team plugged in
 
-| Skill | Use it when |
-| --- | --- |
+| Skill                                                      | Use it when                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **[flora-trend-board](skills/flora-trend-board/SKILL.md)** | A design team needs to know what is moving in a category — colourways, silhouettes, materials, competitor launches — and nobody reads the written trend report. Scans a named source set on a schedule, ranks signals by velocity rather than by how interesting they sound, and posts generated mood boards into the channel the team already lives in. Carries a divergence rule so four boards do not come back looking like one board four times. |
 
 ### Check — judge it before it ships
 
-| Skill | Use it when |
-| --- | --- |
+| Skill                                                                              | Use it when                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **[flora-brand-consistency-audit](skills/flora-brand-consistency-audit/SKILL.md)** | A batch is individually acceptable but collectively inconsistent, and it is about to go to a client, an ad platform or a PDP. Judges a set against the brand's actual rules — identity, palette, treatment, crop system, lockups, background, output specs — and returns findings with severity, evidence and a fix each. Reads the set before the assets, and close-reads a stratified sample, because every image it looks at costs a vision call. |
 
 ### Iterate — build on what exists
 
-| Skill | Use it when |
-|---|---|
-| **[flora-canvas-iterate](skills/flora-canvas-iterate/SKILL.md)** | The user refers to an existing project or canvas — "the hero images from last week", "what's in the Meridian project" — and wants to revise rather than start over. |
-| **[flora-open-project](skills/flora-open-project/SKILL.md)** | You are starting a session on one specific canvas — from a workspace and project id, a pasted link, or FLORA's "Open in agent" button. Signs an in-harness browser (Claude Code Desktop, Cowork) into the canvas with WebMCP via `flora_open_project`, or falls back to the hosted tools, then reads the canvas and offers starters or two ways to continue. |
+| Skill                                                            | Use it when                                                                                                                                                                                                                                                                                                                                                  |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **[flora-canvas-iterate](skills/flora-canvas-iterate/SKILL.md)** | The user refers to an existing project or canvas — "the hero images from last week", "what's in the Meridian project" — and wants to revise rather than start over.                                                                                                                                                                                          |
+| **[flora-open-project](skills/flora-open-project/SKILL.md)**     | You are starting a session on one specific canvas — from a workspace and project id, a pasted link, or FLORA's "Open in agent" button. Signs an in-harness browser (Claude Code Desktop, Cowork) into the canvas with WebMCP via `flora_open_project`, or falls back to the hosted tools, then reads the canvas and offers starters or two ways to continue. |
 
 ★ = flagship, most heavily tested.
 
@@ -272,13 +275,13 @@ never have to type a skill's name.
 
 > That's not quite right, try again.
 >
-> *(The skill should refuse to re-roll blind and ask what "right" means. If it just
-> regenerates, the skill didn't fire — that's the bug to look for.)*
+> _(The skill should refuse to re-roll blind and ask what "right" means. If it just
+> regenerates, the skill didn't fire — that's the bug to look for.)_
 
 > A photo of a clock face showing exactly 4:37. Refine until the hands are correct.
 >
-> *(Models are bad at clock hands. Correct behaviour is stopping once the same defect
-> survives a real prompt change, and handing you options — not burning more rounds.)*
+> _(Models are bad at clock hands. Correct behaviour is stopping once the same defect
+> survives a real prompt change, and handing you options — not burning more rounds.)_
 
 ### flora-script-to-video
 
@@ -307,9 +310,9 @@ never have to type a skill's name.
 
 > Create a campaign deck of a flower.
 >
-> *(No artwork attached, so the skill writes the poster first — one generation — shows
+> _(No artwork attached, so the skill writes the poster first — one generation — shows
 > it to you, and only places it once you say yes. Four wrong placements is the failure
-> it is avoiding, and they are not re-rollable.)*
+> it is avoiding, and they are not re-rollable.)_
 
 ### flora-brand-ad-pipeline
 
@@ -321,8 +324,8 @@ never have to type a skill's name.
 
 > Re-run the summer campaign — two of the ads didn't make it into Meta last time.
 >
-> *(The manifest is the point: a re-run should repair the two missing rows, not
-> regenerate and re-upload all of them.)*
+> _(The manifest is the point: a re-run should repair the two missing rows, not
+> regenerate and re-upload all of them.)_
 
 ### flora-pdp-deck
 
@@ -334,9 +337,9 @@ never have to type a skill's name.
 
 > I've only got this one product photo. What can you actually get me from it?
 >
-> *(The skill should say plainly that one photo buys one plate, not four — asking
+> _(The skill should say plainly that one photo buys one plate, not four — asking
 > a single reference for four angles returns four near-duplicates and bills for
-> all of them. If it promises a full multi-angle set, that's the bug.)*
+> all of them. If it promises a full multi-angle set, that's the bug.)_
 
 ### flora-run-technique
 
@@ -363,14 +366,14 @@ The bar is set by `flora-batch-generate` and `flora-mockup-deck`. Both share a s
 and it is not "a description of the tools":
 
 - **A law.** One sentence naming the invariant the skill exists to protect.
-  *"N items is one wait, not N waits."* *"A re-run with an unchanged prompt is not a
-  refinement."* If you cannot write that sentence, the skill is not ready.
+  _"N items is one wait, not N waits."_ _"A re-run with an unchanged prompt is not a
+  refinement."_ If you cannot write that sentence, the skill is not ready.
 - **Measured numbers.** `265ms`, `3.45x`, `17% undercount`, `limit: 100`. Not "fast",
   not "expensive", not "usually works".
 - **Named gotchas.** The specific thing that silently ate someone's credits, written
   down with what it looked like when it happened. The most valuable content in this
   repo is the failure someone already paid for.
-- **What it does *not* do.** Where the skill stops, stated plainly, so an agent does
+- **What it does _not_ do.** Where the skill stops, stated plainly, so an agent does
   not improvise past its tested edge.
 
 Thin wrappers around tool descriptions are not useful — agents can already read tool
@@ -392,32 +395,36 @@ Neither started as a feature request. Both are the kind of thing this repo exist
 surface, so that the next person does not have to rediscover it.
 
 If you have built a workflow that works, **[send it back](CONTRIBUTING.md)**. The bar
-is the four bullets above, and the process is a pull request.
+is the four bullets above. Open an issue describing the workflow or correction; a
+maintainer will incorporate it in the monorepo and publish it to this mirror.
 
 ---
 
 ## Reference
 
 - **FLORA MCP endpoint** — `https://agents.flora.ai/mcp` (streamable HTTP, OAuth)
-- **API and SDK docs** — the server's own `search_docs` tool, or
-  [docs.flora.ai](https://docs.flora.ai)
+- **Workflow instructions** — `flora_discover_skills` lists available skills; pass a
+  skill name to load its instructions.
+- **API and SDK docs** — [docs.flora.ai](https://docs.flora.ai).
 - **Two ways to call FLORA from a skill:**
-  - **Named tools** — `flora_generate`, `flora_run_technique`, `flora_list_models` and
-    friends. Simple, one call per action. Best for single-shot work.
-  - **`execute`** — runs TypeScript against a pre-authenticated SDK client. Best for
-    batches, because a whole fan-out fits in one call. Limits: ~5 minutes per call, 30s
-    per HTTP request, and no variables persist between calls.
+  - **Named tools (preferred)** — `flora_create_generations`, `flora_list_generations`,
+    `flora_run_technique`, `flora_list_models` and friends. Create 1–20 generations with
+    `{ "generations": [...] }`, including a one-item array for a single generation.
+    Retain successful run IDs and poll with `{ "run_ids": [...] }`; include
+    `technique_id` for technique runs. Omit run IDs only to list history. Never retry
+    a whole batch because one submission failed.
+  - **`execute` (deprecated fallback)** — runs TypeScript against a pre-authenticated
+    SDK client. Use only for operations without a dedicated tool, not to batch calls.
+    Limits: ~5 minutes per call, 30s per HTTP request, and no variables persist between calls.
 
-### Verified against
+### Connection reference
 
-Every tool name and SDK method used in these skills was checked against the live server.
-When a skill stops working, re-check this first — it is the thing that rots.
+Check the connected server's advertised tool list and schemas before running a workflow.
+The examples target the plural hosted generation tools; older cached catalogs need refreshing.
 
 ```
 endpoint      https://agents.flora.ai/mcp   (streamable HTTP, Clerk OAuth)
 API base      https://app.flora.ai/api/v1
-SDK           FLORA/JS 0.10.0               (the version inside the execute sandbox)
-tools         14 referenced, all present
 SDK methods   generations.create · generations.list · generations.retrieve
               models.list · projects.create · assets.create
               techniques.runs.create · techniques.runs.retrieve
@@ -429,7 +436,7 @@ Two things that do **not** exist and are easy to reach for: `models.retrieve` (u
 FLORA also ships an in-browser MCP surface (WebMCP) that operates a live canvas
 directly. It has a **different, larger tool vocabulary** — `flora_run_batch`,
 `flora_get_batch_status`, `flora_get_generations`, `flora_edit_layers` and others — and
-these skills do not target it. If you are writing a skill against the browser surface,
+some skills explicitly distinguish that path. If you are writing a skill against the browser surface,
 check its tool names separately; they are not interchangeable with the hosted server's.
 
 ## Licence

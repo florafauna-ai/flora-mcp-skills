@@ -5,6 +5,8 @@ description: Scan a fixed set of trend sources on a schedule, score which signal
 
 # Trend scan → mood board
 
+Use dedicated tools for this workflow, including batches. `execute` is deprecated; use it only for an SDK operation without a dedicated tool. SDK examples below describe orchestration: use the corresponding dedicated tools, issue independent calls concurrently, retain every run id, and poll in later calls. Do not choose `execute` just to combine calls.
+
 Replaces the weekly trend report nobody reads. Scans a named source set, ranks signals by how fast they are moving rather than how interesting they sound, and renders the top ones as generated mood boards in the channel the design team already lives in.
 
 The design team's job is to react to the boards. Nobody should have to open a document.

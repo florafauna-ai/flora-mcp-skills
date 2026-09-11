@@ -5,6 +5,10 @@ description: Run a saved FLORA technique — a multi-step visual workflow such a
 
 # Run a FLORA technique
 
+Hosted MCP generation inputs are plural: call `flora_create_generations` with `{ "generations": [{ "workspace_id": "ws_…", "project_id": "prj_…", "type": "image", "prompt": "…" }] }` (1–20 items). Put per-generation fields, including optional `model`, `params`, and `reference_node_ids`, inside each item. Read `generations[]` in the response; retain successful entries' `run_id` and handle failures individually. Poll `flora_list_generations` with `{ "run_ids": ["run_…"] }`, even for one run; add `technique_id` for technique runs. Never retry successful items because another item failed.
+
+Use dedicated tools for this workflow, including batches. `execute` is deprecated; use it only for an SDK operation without a dedicated tool. SDK examples below describe orchestration: use the corresponding dedicated tools, issue independent calls concurrently, retain every run id, and poll in later calls. Do not choose `execute` just to combine calls.
+
 A technique is a saved workflow that chains several models. It is the thing FLORA
 does that a single image model cannot: the steps, prompts, and model choices are
 fixed by whoever authored it, so the same technique gives the same treatment every
@@ -21,7 +25,7 @@ landed in.
 
 2. **Find the technique.** Call `flora_list_techniques` and match on the user's
    intent. It returns `run_cost` and a summary of inputs for each. If nothing fits,
-   say so and offer `flora_generate` instead — do not force an unrelated technique.
+   say so and offer `flora_create_generations` instead — do not force an unrelated technique.
 
 3. **Get the exact input ids.** Call `flora_get_technique`. Its declared input ids
    are the keys `flora_run_technique` expects. Never guess them from the name.
@@ -32,7 +36,7 @@ landed in.
    an `inputs` object keyed by those ids. Omit optional text inputs entirely when
    the user gave no direction — an empty string is rejected, not treated as absent.
 
-6. **Poll and report.** Poll `flora_get_run` until status is `completed` or
+6. **Poll and report.** Poll `flora_list_generations` until status is `completed` or
    `failed`. Report the output URL, the charged cost, and a link to the project.
 
 ## Image inputs

@@ -34,8 +34,8 @@ FLORA's MCP server (`https://agents.flora.ai/mcp`) gives an agent raw capability
 
 ## How to call FLORA
 
-- **Named tools** (`flora_generate`, `flora_run_technique`, `flora_list_models`, …) — one call per action. Best for single-shot work.
-- **`execute`** — TypeScript against a pre-authenticated SDK client. Best for batches, because a whole fan-out fits in one call. Limits: ~5 min per call, 30 s per HTTP request, no state between calls.
+- **Named tools** (generation creation, `flora_run_technique`, `flora_list_models`, …) — use for single actions and batches. Issue independent calls concurrently, save every returned run id, and poll in later calls.
+- **`execute` is deprecated.** Use only for an SDK operation without a dedicated tool. Batching is not a reason to use it. Limits: ~5 min per call, 30 s per HTTP request, no state between calls.
 
 Not present and easy to reach for: `models.retrieve` (use `models.list().find()`) and `runs.action` (use the `flora_run_action` tool).
 

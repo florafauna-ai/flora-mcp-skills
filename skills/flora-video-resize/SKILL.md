@@ -5,6 +5,10 @@ description: Generatively resize/reframe an input video into multiple aspect rat
 
 # FLORA Generative Video Resize
 
+Hosted MCP generation inputs are plural: call `flora_create_generations` with `{ "generations": [{ "workspace_id": "ws_…", "project_id": "prj_…", "type": "image", "prompt": "…" }] }` (1–20 items). Put per-generation fields, including optional `model`, `params`, and `reference_node_ids`, inside each item. Read `generations[]` in the response; retain successful entries' `run_id` and handle failures individually. Poll `flora_list_generations` with `{ "run_ids": ["run_…"] }`, even for one run; add `technique_id` for technique runs. Never retry successful items because another item failed.
+
+Use dedicated tools for this workflow, including batches. `execute` is deprecated; use it only for an SDK operation without a dedicated tool. SDK examples below describe orchestration: use the corresponding dedicated tools, issue independent calls concurrently, retain every run id, and poll in later calls. Do not choose `execute` just to combine calls.
+
 Turn ONE source video into every target aspect ratio, generatively — no black bars, no crop — while keeping the original's subject, wardrobe, motion, lighting, grade, on-screen text, and timing.
 
 ## Trigger
@@ -13,7 +17,7 @@ User supplies a video (upload or URL) and wants it in other aspect ratios/format
 
 ## Critical API fact (the #1 failure mode)
 
-`flora_generate` **silently ignores** any attempt to pass a source video via `params` (e.g. `video_url`) or an `inputs` array — it will happily run text-to-video from your prompt and burn credits producing an unrelated clip. A v2v model ONLY receives the source through a **canvas edge**. Never call `flora_generate` for v2v without a wired `node_id`.
+`flora_create_generations` **silently ignores** any attempt to pass a source video via `params` (e.g. `video_url`) or an `inputs` array — it will happily run text-to-video from your prompt and burn credits producing an unrelated clip. A v2v model ONLY receives the source through a **canvas edge**. Never call `flora_create_generations` for v2v without a wired `node_id`.
 
 ## Steps
 
@@ -31,11 +35,7 @@ User supplies a video (upload or URL) and wants it in other aspect ratios/format
      <assetNodeId> --> r1["Reframe 9x16 (Video)"]
    ```
    with `node_params: {"r1": {"model": "v2v-seedance-2-5", "prompt": <prompt>, "model_parameters": {"aspect_ratio": "9:16", "resolution": "1080p", "duration": "<source seconds>"}}}`. One node per target AR — add them all in one call, all edges from the same asset node.
-5. **Run each node.** The MCP `flora_generate` tool has no `node_id` field, so use `execute`:
-   ```ts
-   client.generations.create({ workspace_id, project_id, node_id: "r1", type: "video", model: "v2v-seedance-2-5", prompt, params: { aspect_ratio: "9:16", resolution: "1080p", duration: "12" } })
-   ```
-   Fire all ARs concurrently; poll with `flora_get_run` (~3–5 min each).
+5. **Run the wired nodes.** Call `flora_run_canvas_nodes` with `workspace_id`, `project_id`, and `node_ids` containing the actual canvas node ids returned by `flora_add_to_canvas`. It uses each node's configured model, prompt, parameters, and upstream video. Submit all AR nodes together, inspect skipped entries, and poll each started `run_id` with `flora_list_generations` (~3–5 min each).
 6. **Prompt recipe** (fill from step 1; one prompt per AR):
    - Open with the transform: "Reframe this video from {source AR} to {target AR} {vertical/landscape}."
    - Pin what must not change: "Keep the original composition, subject ({specific description: identity, wardrobe, prop}), camera position, {specific camera move}, lighting, color grade, and timing exactly as in the source."

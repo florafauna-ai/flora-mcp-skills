@@ -12,6 +12,8 @@ description: >
 
 # flora-script-to-video
 
+Use dedicated tools for this workflow, including batches. `execute` is deprecated; use it only for an SDK operation without a dedicated tool. SDK examples below describe orchestration: use the corresponding dedicated tools, issue independent calls concurrently, retain every run id, and poll in later calls. Do not choose `execute` just to combine calls.
+
 > **Attribution.** Pass `skill: "flora-script-to-video"` on every FLORA call you
 > make while running this skill — `execute` included — along with a `skill_run_id`
 > you invent once when the run starts and reuse for the rest of it. Both are
@@ -263,9 +265,9 @@ m2v-…-vref   reference-conditioned variants
 
 Endpoints like `r2v-seedance-2-5`, `i2v-gemini-omni-r2v-fal` and
 `i2v-grok-imagine-i2v-references` exist for exactly this. If a specific capacity matters
-to your plan, **verify it at runtime with `search_docs` or a single probe clip** rather
-than trusting a remembered figure — the catalog does not publish per-endpoint reference
-limits, and they change.
+to your plan, inspect `flora_list_models` and load the relevant workflow with
+`flora_discover_skills`. If the reference limit is still undocumented, disclose the
+uncertainty and obtain approval for a paid probe clip before relying on that capacity.
 
 Where multiple references are supported, pass the locked style reference *plus* the
 neighbouring approved keyframes, so each clip is anchored to the shots either side of it.
@@ -388,7 +390,7 @@ REFERENCE COUNT
 not in params          video models declare only duration/aspect_ratio/resolution/seed.
                        Reference capacity is signalled by the modality prefix — r2v-,
                        i2v-…-references, m2v-…-vref — not by a named field.
-verify at runtime      with search_docs or one probe clip. Do not trust a remembered
+verify at runtime      with model metadata, skills, or an approved probe clip. Do not trust a remembered
                        per-endpoint reference limit; the catalog does not publish them.
 more refs = tighter    consistency. Pass the style reference plus neighbouring approved
                        keyframes where the endpoint accepts them.
