@@ -1,15 +1,15 @@
 ---
 name: flora-pdp-deck
 description: >
-  Turn a product into a shoppable PDP asset set and an annotated PDF. Drop a
+  Turn a product into a shoppable PDP asset set with native editable Deck or PDF delivery. Drop a
   product photo into the chat -- and a model frame if you have one -- and it
-  returns clean studio plates, on-model views, and an A4 deck. Works from a
+  returns clean studio plates, on-model views, and an annotated deck. Works from a
   single image. The product is reference-locked and never re-described. Use when
   someone asks for PDP assets, product detail page imagery, an on-model set, a
   product gallery, shots of this product on a model, or a product recreated
   de-branded and shot on a person. Do not use for placing finished artwork in
   the world -- that is flora-mockup-deck -- or for a one-off image with no set
-  around it.
+  around it. For slide authoring or edits using existing assets, use flora-deck-editor.
 ---
 
 # flora-pdp-deck
@@ -18,7 +18,23 @@ Hosted MCP generation inputs are plural: call `flora_create_generations` with `{
 
 Use dedicated tools for this workflow, including batches. `execute` is deprecated; use it only for an SDK operation without a dedicated tool. SDK examples below describe orchestration: use the corresponding dedicated tools, issue independent calls concurrently, retain every run id, and poll in later calls. Do not choose `execute` just to combine calls.
 
-Self-contained. The deck builder is at the foot of this file; write it out and run it.
+Asset generation is described here. For native Deck delivery, load
+`flora-deck-editor`; the HTML/PDF builder remains at the foot of this file.
+
+## Choose the delivery format
+
+Honor an explicit PDF request with the HTML/PDF workflow below. For an editable
+Deck on the FLORA canvas, load `flora-deck-editor` through `flora_discover_skills`
+and check its hosted document capabilities before promising delivery. When the
+user says only "deck", prefer native delivery if supported; state the chosen
+format. If unavailable, explain and offer the HTML/PDF path.
+
+This skill still owns intake, reference locking, studio plates, on-model views,
+asset inspection, and generation costs. Native delivery changes assembly, not
+which assets need to be generated. Use the same content plan below on native
+slides, with editable titles and annotations beside the approved asset sources.
+Delegate document shape, geometry, revisions, bindings, and readback to
+`flora-deck-editor`. Keep PDF generation explicit; saving a Deck does not export one.
 
 ## What it is
 
@@ -109,7 +125,7 @@ image down and look at it before spending on it.
 Hosted `flora_create_generations` takes **one** `image_url`. `params.image_urls` plural is
 accepted, silently ignored, and still billed.
 
-To get a product *and* a model into one frame, stitch them into a single sheet first
+To get a product _and_ a model into one frame, stitch them into a single sheet first
 with a credit-free action, and pass the sheet:
 
 ```
@@ -124,7 +140,7 @@ carried over, the street and the tote bag she was wearing both gone, the ground
 overridden to the plates' seamless. No diptych, no gutter.
 
 **The reference contract does the work.** Say which panel is truth for what, and say
-what *not* to take — not the split layout, not the gutter, not the right panel's street
+what _not_ to take — not the split layout, not the gutter, not the right panel's street
 or crop or pose. Then name each of those again in `FAIL IF`. Without that the sheet's
 own layout leaks into the output.
 
@@ -136,9 +152,9 @@ colour; do not trust it to hold a seam, a stitch or a drip. Put the fine detail 
 
 ## Law 1 — reference, do not describe
 
-A set generated from a written spec alone looks *plausible* and is *inconsistent*. Each
+A set generated from a written spec alone looks _plausible_ and is _inconsistent_. Each
 frame invents the unstated details independently. A strap specified as existing but not
-where it *terminated* ended two-thirds down the panel in one frame and ran over the
+where it _terminated_ ended two-thirds down the panel in one frame and ran over the
 bottom seam in another. Both obeyed the prompt.
 
 So the prompt says "the truth of the product is attached" rather than enumerating it.
@@ -156,11 +172,11 @@ On hosted there are no edges — the reference is `params.image_url`, or a compo
 Describing what you want does not prevent the specific thing that goes wrong.
 Forbidding it does.
 
-| written as the ideal | drifted | rewritten as the failure | held |
-|---|---|---|---|
-| "worn high and snug" | bag floated off the back | "NO daylight, NO gap, NO wedge of background between the back panel and his body" | yes |
-| "same bag throughout" | orange tabs appeared mid-clip | "no orange patch, tab, tag, label or stitching appears anywhere else on the bag" | yes |
-| "dead level, no tilt" | camera looked down on all four plates | "FAIL IF the elliptical opening of the dish is visible; the rim reads as a straight line" | — |
+| written as the ideal  | drifted                               | rewritten as the failure                                                                  | held |
+| --------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------- | ---- |
+| "worn high and snug"  | bag floated off the back              | "NO daylight, NO gap, NO wedge of background between the back panel and his body"         | yes  |
+| "same bag throughout" | orange tabs appeared mid-clip         | "no orange patch, tab, tag, label or stitching appears anywhere else on the bag"          | yes  |
+| "dead level, no tilt" | camera looked down on all four plates | "FAIL IF the elliptical opening of the dish is visible; the rim reads as a straight line" | —    |
 
 Every prompt ends in a `FAIL IF:` list naming the specific drift in the model's own
 terms. Not a style note — a spec.
@@ -188,7 +204,7 @@ shoot — though it buys consistency without guaranteeing it: one plate of four 
 horizon line the other three lacked, from an identical RIG block. Look at the set.
 
 **The camera finish comes from a reference, in words.** A client supplies a look whose
-*grade* they want, not whose subject they want. Read the plate and write the grade out;
+_grade_ they want, not whose subject they want. Read the plate and write the grade out;
 never wire it as a reference, which drags its composition in.
 
 ```
@@ -218,7 +234,7 @@ Every shot line carries **camera height and focal length**. Without them the mod
 defaults to eye-level 50mm and the set reads flat.
 
 Conversion frames — the mechanism half-done — are the weakest in every run. Hands read
-as *handling* the straps, not stowing them. If conversion matters, wire a reference
+as _handling_ the straps, not stowing them. If conversion matters, wire a reference
 showing the mechanism mid-action; description alone has not carried it.
 
 ## Model routing
@@ -251,13 +267,13 @@ true span (created_at -> completed_at)     observed as "running"
 ```
 
 `progress` never moved off `0` on either — it is a placeholder, not a progress bar. A
-*technique* run does report real progress (40 → 70 → 94 → 100), and a credit-free
-*action* completed and read back correctly in 9 seconds with no lag. The lag belongs to
+_technique_ run does report real progress (40 → 70 → 94 → 100), and a credit-free
+_action_ completed and read back correctly in 9 seconds with no lag. The lag belongs to
 generation runs.
 
 **Never conclude anything from elapsed poll time.** Do not re-fire, do not report a
 hang, do not tell the user it is stuck. Poll `flora_list_generations`, not
-`flora_list_generations`. When it lands, read `completed_at` and report *that* as the duration.
+`flora_list_generations`. When it lands, read `completed_at` and report _that_ as the duration.
 Tell the user the queue is opaque and the wait is not the work.
 
 ## De-branding
@@ -276,12 +292,12 @@ material.
 Back it with a `FAIL IF` clause, and check the back panel specifically — wordmarks live
 there and survive when a front logo has gone.
 
-Watch the other direction too. A third-party technique can *inject* branding: one
+Watch the other direction too. A third-party technique can _inject_ branding: one
 returned eight views of a different, branded product entirely (below).
 
 ## Delivery — the deck
 
-A4 landscape, one page per thing. Neutral chrome. Only `PROJECT` and `DATE` are
+One slide/page per thing. The PDF uses A4 landscape. Neutral chrome. Only `PROJECT` and `DATE` are
 parameters, both in the footer.
 
 ```
@@ -296,6 +312,11 @@ n   KEY VISUAL   full width, one paragraph on the layout, if the set earns one
 
 No audit block, no pass/fail marks. If a frame is visibly wrong, say so in one plain
 sentence when reporting back, not in the deck.
+
+For native delivery, use this content plan with `flora-deck-editor`, then report
+the project link, Deck node ID, slide count, and checks actually performed.
+
+### HTML/PDF delivery
 
 Write the builder from the appendix and run it beside the deliverables — it resolves
 `assets` and writes the html relative to the CWD:
@@ -345,10 +366,11 @@ technique outputs      poll flora_list_generations with run_ids and technique_id
 flora_run_technique    takes no project_id -- it creates its OWN project.
 wired gen nodes        flora_add_to_canvas creates them idle. Start generation nodes
                        with flora_run_canvas_nodes; use flora_run_canvas_action for actions.
-flora_add_to_canvas    add-only. Re-declaring an existing id creates a SECOND node and
-                       warns. A 200 with warnings is not a clean apply.
-flora_get_canvas       its diagram is a picture, not a document. Sending it back
-                       duplicates every node it declares.
+flora_add_to_canvas    add-only. A ref that matches a live node id is rejected; connect
+                       to existing nodes by their short id. A 200 with warnings is not
+                       a clean apply.
+flora_get_canvas       a read. Its nodes are not an add list: re-sending them
+                       duplicates every node.
 charged_cost           a generation quoted 0.253 and settled 0.519 -- 2.05x, twice. A
                        technique settled at exactly its quote. Do not generalise the
                        markup. Quote from a COMPLETED run or call the number a floor.

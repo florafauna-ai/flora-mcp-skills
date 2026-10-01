@@ -11,8 +11,7 @@ gotchas are, what a good result looks like, and what to do when one comes back w
 Skills document tested workflows and measured observations. Model behavior and tool
 availability can change; check the connected server before following an example.
 
-This repository is the public distribution mirror. FLORA maintainers author skills in
-`packages/skills-ts/skills/` in the monorepo and publish reviewed updates here manually.
+FLORA maintains these skills and publishes updates here through reviewed pull requests.
 
 ---
 
@@ -396,7 +395,7 @@ surface, so that the next person does not have to rediscover it.
 
 If you have built a workflow that works, **[send it back](CONTRIBUTING.md)**. The bar
 is the four bullets above. Open an issue describing the workflow or correction; a
-maintainer will incorporate it in the monorepo and publish it to this mirror.
+maintainer will review it and include accepted changes in a future update.
 
 ---
 

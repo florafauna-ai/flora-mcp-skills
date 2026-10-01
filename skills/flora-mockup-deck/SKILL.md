@@ -5,13 +5,15 @@ description: >
   words. Give it a poster, billboard ad, campaign key visual or any finished artwork on
   a FLORA canvas, or just a line like "a campaign deck of a flower", and it returns four
   square-on out-of-home placements (gable end, transit platform, bus shelter,
-  construction hoarding), three social resizes (1:1, 4:5, 9:16), and an annotated A4 PDF
+  construction hoarding), three social resizes (1:1, 4:5, 9:16), and a native editable
+  Deck or annotated A4 PDF
   laying all of it out with the brief printed beside each placement. Use when someone asks
   to mock up an ad, see a poster in the wild, in situ or out of home, wants social sizes of
   an ad, asks for a placement deck or a PDF of one, or asks for a campaign deck of
   something they have no artwork for. Once the creative exists it is reproduced exactly and
   never regenerated. One shot, four billable generations plus one when the creative is
-  written rather than supplied, one PDF.
+  written rather than supplied. For slide authoring or edits using existing assets,
+  use flora-deck-editor.
 ---
 
 # flora-mockup-deck
@@ -38,6 +40,21 @@ exactly like a supplied file. See "Two ways in".
 The thing that makes a mockup fail is never the photograph. It is the artwork drifting:
 recoloured, recropped, re-lettered, a word dropped. So the whole skill is built around
 one invariant.
+
+## Choose the delivery format
+
+Honor an explicit PDF request with the HTML/PDF workflow below. For an editable
+Deck on the FLORA canvas, load `flora-deck-editor` through `flora_discover_skills`
+and check its hosted document capabilities before promising delivery. When the
+user says only "deck", prefer native delivery if supported; state the chosen
+format. If unavailable, explain and offer the HTML/PDF path.
+
+This skill still owns the master creative, reference fidelity, placements,
+social resizes, and their costs. For native delivery, use the content plan under
+"Delivery — the deck structure", with one placement per slide and editable
+SHOT / LIGHT / MOMENT text beside the source image. Delegate document shape,
+geometry, revisions, bindings, and readback to `flora-deck-editor`. Native
+assembly does not require rerunning assets or the PDF builder.
 
 ## Two ways in
 
@@ -118,12 +135,12 @@ pass, no variant sprawl.
 4  generations   the placements — one per site, not four angles on one site
 3  resizes       1:1, 4:5, 9:16 — NOT generations, see below
 1  contact sheet the four placements in one grid — needs the actions entitlement
-1  PDF           the annotated deck — free, and reachable on every surface
+1  deck          native editable Deck, or the explicit HTML/PDF delivery path
 ```
 
 **Four generations — five from a line of text — three deterministic resizes, one contact
 sheet.** Nothing is repaired,
-re-rolled or replaced, and nothing is measured. Generate the four, build the resizes,
+re-rolled or replaced. Check delivery geometry in the chosen authoring workflow. Generate the four, build the resizes,
 package everything, ship. If a placement is visibly wrong, say so in a sentence.
 
 ### The resizes are not generations
@@ -500,6 +517,7 @@ Goes in every placement prompt:
 > THE CAMERA IS SQUARE ON TO THE ARTWORK. The lens is perpendicular to the printed
 > surface, so the ad sits in frame as a TRUE RECTANGLE, flat and undistorted, read
 > straight. Only slight keystone is acceptable.
+>
 > - NO three-quarter view. NO oblique or angled view of the surface.
 > - The artwork NEVER wraps a corner and NEVER bends across two planes.
 > - It is on ONE flat plane facing the camera.
@@ -546,8 +564,9 @@ flora_run_action      runs a prebuilt action headlessly on inputs supplied inlin
                       media.flora.ai/code-sandbox/... and never appear as canvas nodes.
                       project_id only scopes authorization and generation history.
                       Entitled per workspace: a workspace without it returns
-                      403 forbidden "Actions are not enabled for this workspace.
-                      Upgrade your plan to use actions." That kills BOTH the resizes and
+                      403 forbidden "Actions are not included in this workspace's plan.
+                      About FLORA plans and credits: https://app.flora.ai/home"
+                      That kills BOTH the resizes and
                       the contact sheet, so check it before promising either. The PDF
                       does not depend on actions and still builds.
 flora_create_project  works in some workspaces and 400s in others on the SAME account,
@@ -591,11 +610,15 @@ media urls            fetchable with no credentials. Everything this skill produ
                       Report urls; never claim to have written or opened a file.
 ```
 
-## The deck is an annotated PDF
+## HTML/PDF delivery
 
-**The deliverable is a paginated A4-landscape PDF**, built locally from HTML and printed
+**When PDF is requested, the deliverable is a paginated A4-landscape PDF**, built locally from HTML and printed
 by headless Chrome. Not a server-side render — there is no PDF endpoint — and not a
 contact sheet standing in for one.
+
+For native delivery, follow `flora-deck-editor` and skip this PDF builder section.
+Saving a native Deck does not create a PDF; report the two separately if both
+were requested.
 
 "Annotated" is the whole point. A grid of placements is a contact sheet: it shows what
 came back. The deck prints the SHOT / LIGHT / MOMENT you actually asked for beside each
@@ -755,17 +778,18 @@ the master       one url, from flora_create_generations — WRITTEN path only
 the placements   four urls, one per site, from flora_create_generations — ON the canvas
 the resizes      three urls, from flora_run_action — NOT on the canvas
 the contact      one url, from side-by-side-composite-browser — NOT on the canvas
-the deck         a local .pdf path, built by the deck builder
+the deck         native: project link + Deck node ID; PDF: path from the deck builder
 the project      https://app.flora.ai/projects/<project_id>
 ```
 
-Everything except the PDF is a url. Report the project link with the ids you resolved at
+For native delivery, also report the slide count and readback/bounds checks;
+state whether appearance was inspected. Report the project link with the ids you resolved at
 the top of the run — not one reconstructed at the end, and not the workspace id, which is
 the substitution to watch for since both are long `_`-prefixed strings.
 
 ### Where the files land
 
-On a surface with a filesystem, **always write to `<project>/Deliverables/`.** Create it
+For HTML/PDF delivery on a surface with a filesystem, **always write to `<project>/Deliverables/`.** Create it
 if it is missing. Never leave the deck in a scratch or temp directory, never drop it in
 `~/Downloads`, and never leave it loose in the project root — across three live runs the
 deck landed in three different places and had to be hunted for.
@@ -810,11 +834,11 @@ unreleased.
 
 ## Delivery — the deck structure
 
-One page per thing. Never grid placements two-up; a placement is the deliverable and it
-gets a page. **Every layout the skill produced appears in the deck** — if it was made,
+One slide/page per thing. Never grid placements two-up; a placement is the deliverable and it
+gets its own slide/page. **Every layout the skill produced appears in the deck** — if it was made,
 it ships.
 
-This is the page plan the builder implements. The footer carries the **title**, the
+Use this plan for native slides or the PDF builder. The footer carries the **title**, the
 **date** and the page number, and nothing else.
 
 **No project id and no canvas link anywhere in the rendered PDF.** The deck is a

@@ -1,0 +1,56 @@
+{
+  "kind": "timeline",
+  "schema_version": 1,
+  "fps": 24,
+  "composition_width": 1280,
+  "composition_height": 720,
+  "tracks": [
+    {
+      "id": "picture",
+      "items": ["clip"],
+      "hidden": false,
+      "muted": true
+    }
+  ],
+  "items": {
+    "clip": {
+      "id": "clip",
+      "from": 0,
+      "duration_in_frames": 46,
+      "top": -60,
+      "left": -70,
+      "width": 1433.6000000000001,
+      "height": 806.4000000000001,
+      "opacity": 1,
+      "type": "video",
+      "asset_id": "source",
+      "video_start_from_in_seconds": 0.08333333333333333,
+      "playback_rate": 1.0,
+      "decibel_adjustment": 0,
+      "audio_fade_in_duration_in_seconds": 0,
+      "audio_fade_out_duration_in_seconds": 0,
+      "fade_in_duration_in_seconds": 0,
+      "fade_out_duration_in_seconds": 0,
+      "keep_aspect_ratio": true,
+      "crop_left": 0,
+      "crop_right": 0,
+      "crop_top": 0,
+      "crop_bottom": 0,
+      "border_radius": 0,
+      "rotation": 0
+    }
+  },
+  "assets": {
+    "source": {
+      "id": "source",
+      "type": "video",
+      "filename": "source.mp4",
+      "mime_type": "video/mp4",
+      "width": 1280,
+      "height": 720,
+      "duration_in_seconds": 14.041667,
+      "has_audio_track": true,
+      "media_url": "https://media.example.com/source.mp4"
+    }
+  }
+}

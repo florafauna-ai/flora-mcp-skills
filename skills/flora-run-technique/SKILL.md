@@ -20,8 +20,9 @@ landed in.
 
 ## Steps
 
-1. **Resolve the workspace.** Call `flora_list_workspaces`. If there is more than
-   one, ask which to bill before spending anything.
+1. **Resolve the workspace.** If the connection already names the user's current
+   workspace, use it. Otherwise call `flora_list_workspaces`; if there is more
+   than one, ask which to bill before spending anything.
 
 2. **Find the technique.** Call `flora_list_techniques` and match on the user's
    intent. It returns `run_cost` and a summary of inputs for each. If nothing fits,
