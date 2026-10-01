@@ -1,0 +1,56 @@
+{
+  "tracks": [
+    {
+      "id": "picture",
+      "items": ["clip"],
+      "hidden": false,
+      "muted": true
+    }
+  ],
+  "items": {
+    "clip": {
+      "id": "clip",
+      "from": 0,
+      "durationInFrames": 46,
+      "top": -60,
+      "left": -70,
+      "width": 1433.6000000000001,
+      "height": 806.4000000000001,
+      "opacity": 1,
+      "type": "video",
+      "assetId": "source",
+      "videoStartFromInSeconds": 0.08333333333333333,
+      "playbackRate": 1.0,
+      "decibelAdjustment": 0,
+      "audioFadeInDurationInSeconds": 0,
+      "audioFadeOutDurationInSeconds": 0,
+      "fadeInDurationInSeconds": 0,
+      "fadeOutDurationInSeconds": 0,
+      "keepAspectRatio": true,
+      "cropLeft": 0,
+      "cropRight": 0,
+      "cropTop": 0,
+      "cropBottom": 0,
+      "borderRadius": 0,
+      "rotation": 0
+    }
+  },
+  "assets": {
+    "source": {
+      "id": "source",
+      "type": "video",
+      "filename": "source.mp4",
+      "remoteUrl": "https://media.example.com/source.mp4",
+      "mediaUrl": "https://media.example.com/source.mp4",
+      "mimeType": "video/mp4",
+      "width": 1280,
+      "height": 720,
+      "durationInSeconds": 14.041667,
+      "hasAudioTrack": true
+    }
+  },
+  "fps": 24,
+  "compositionWidth": 1280,
+  "compositionHeight": 720,
+  "deletedAssets": []
+}

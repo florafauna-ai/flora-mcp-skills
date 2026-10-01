@@ -96,7 +96,8 @@ Nothing here spends.
   to the user in their own vocabulary.
 - Read the manifest if one exists. **Report what is already done before proposing
   work.** A resumed campaign that re-fires completed rows is the expensive failure here.
-- Resolve the workspace with `flora_list_workspaces`. More than one, ask which to bill.
+- Resolve the workspace: use the current workspace if the connection names one,
+  else `flora_list_workspaces`; more than one, ask which to bill.
 - Resolve the technique with `flora_get_technique`. Its declared input ids are the keys
   the run expects — never guess them from the name.
 - Confirm every product has a reference shot reachable as an HTTPS URL.

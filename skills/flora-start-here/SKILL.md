@@ -1,6 +1,6 @@
 ---
 name: flora-start-here
-description: Entry point for FLORA's MCP server. Use this skill when (1) an agent has the FLORA MCP connected and needs to decide which flora-* skill applies to a request, (2) the request involves generating images, video, or audio, running a saved FLORA technique, or reading and writing a FLORA canvas, (3) the user has a list of products, SKUs, or variants and wants consistent assets, or (4) a first FLORA result came back wrong and needs to be driven to a goal. Routes to the specialised flora-* skills; does not generate on its own.
+description: Entry point for FLORA's MCP server. Route image, video, audio, technique, canvas, and native Deck requests to the appropriate flora-* skill. Use for choosing a workflow, including decks, slides, presentations, and "edit slide" requests; lists of products or variants; or refining an incorrect result. Does not generate on its own.
 ---
 
 # FLORA MCP Skills — start here
@@ -18,14 +18,20 @@ FLORA's MCP server (`https://agents.flora.ai/mcp`) gives an agent raw capability
 | An existing image | A saved workflow applied (relight, upscale, background swap, sketch-to-render) | `flora-run-technique` |
 | A finished image | New aspect ratios or sizes without regenerating | `flora-image-resize` |
 | A finished video | New aspect ratios without regenerating | `flora-video-resize` |
-| A finished ad creative | Out-of-home placements, social resizes, annotated PDF | `flora-mockup-deck` |
-| A product photo (+ optional model frame) | Studio plates, on-model views, PDP deck | `flora-pdp-deck` |
+| A brief, existing assets, or a native Deck | Create/edit a deck, slides, or presentation; "edit slide" | `flora-deck-editor` |
+| A finished ad creative | Out-of-home placements, social resizes, native Deck or annotated PDF | `flora-mockup-deck` |
+| A product photo (+ optional model frame) | Studio plates, on-model views, native Deck or PDP PDF | `flora-pdp-deck` |
 | A product launch | Generate → archive → host → paused Meta ads | `flora-brand-ad-pipeline` |
 | A set of generated assets | Checked against brand rules before shipping | `flora-brand-consistency-audit` |
 | A theme, season, or category | A visual research board of directions | `flora-trend-board` |
 | An existing project or canvas | Revise what's there rather than start over | `flora-canvas-iterate` |
 
 ★ = flagship, most heavily tested.
+
+Native Deck authoring uses the hosted document tools; load `flora-deck-editor`
+and check its capability requirements on the current transport. PDP and mockup
+skills own asset generation and delegate native assembly to it. Explicit PDF
+requests keep their HTML/PDF workflows; a saved Deck is not a PDF export.
 
 ## Two laws that apply everywhere
 

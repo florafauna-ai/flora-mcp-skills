@@ -29,12 +29,25 @@ User supplies a video (upload or URL) and wants it in other aspect ratios/format
    - **WAN 2.6 v2v** (`v2v-wan-2.6`) — has 3:4/4:3, but duration caps at 10s.
    - **Gemini Omni 1.1 Flash v2v** — 16:9/9:16 only, up to 4K.
    - **4:5 is native nowhere**: generate 3:4 (WAN) or 9:16 (Seedance), then the FREE `change-video-ar` action to center-crop the small delta.
-4. **Wire the graph.** `flora_add_to_canvas` — node type comes from the label suffix, exactly `id["Label (Video)"]`; use `graph LR`, reference the asset node by bare id:
+4. **Wire the graph.** `flora_add_to_canvas` with one `add` per target AR and one `connect` from the asset node's short id to each:
+   ```json
+   {
+     "workspace_id": "<workspaceId>",
+     "project_id": "<projectId>",
+     "add": [
+       {
+         "ref": "r1",
+         "type": "video",
+         "label": "Reframe 9x16",
+         "model": "v2v-seedance-2-5",
+         "prompt": "<prompt>",
+         "params": { "aspect_ratio": "9:16", "resolution": "1080p", "duration": "<source seconds>" }
+       }
+     ],
+     "connect": [{ "from": "<assetNodeId>", "to": "r1" }]
+   }
    ```
-   graph LR
-     <assetNodeId> --> r1["Reframe 9x16 (Video)"]
-   ```
-   with `node_params: {"r1": {"model": "v2v-seedance-2-5", "prompt": <prompt>, "model_parameters": {"aspect_ratio": "9:16", "resolution": "1080p", "duration": "<source seconds>"}}}`. One node per target AR — add them all in one call, all edges from the same asset node.
+   Add them all in one call, all edges from the same asset node.
 5. **Run the wired nodes.** Call `flora_run_canvas_nodes` with `workspace_id`, `project_id`, and `node_ids` containing the actual canvas node ids returned by `flora_add_to_canvas`. It uses each node's configured model, prompt, parameters, and upstream video. Submit all AR nodes together, inspect skipped entries, and poll each started `run_id` with `flora_list_generations` (~3–5 min each).
 6. **Prompt recipe** (fill from step 1; one prompt per AR):
    - Open with the transform: "Reframe this video from {source AR} to {target AR} {vertical/landscape}."

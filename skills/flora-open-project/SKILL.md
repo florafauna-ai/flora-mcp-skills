@@ -25,6 +25,7 @@ has already read.
 1. **Get the ids.** Both a workspace id and a project id are required before
    anything else. If the user gave a canvas URL, the project id is the
    `/projects/<id>` segment, prefixed `prj_`. If either is missing, resolve it:
+   use the connection's current workspace when it names one; otherwise
    `flora_list_workspaces`, then `flora_list_projects` with the workspace, and
    match on the user's wording. Ask if the match is ambiguous; never create a
    project here.
