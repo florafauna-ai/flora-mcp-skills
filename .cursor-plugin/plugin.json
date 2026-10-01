@@ -1,0 +1,13 @@
+{
+  "name": "flora",
+  "description": "Generate images, video, audio and text with FLORA from Cursor. Bundles FLORA's hosted MCP server with hand-tested skills for batch generation, refine loops, script-to-video, technique runs, mockup decks, PDP sets, brand ad pipelines and canvas iteration.",
+  "author": {
+    "name": "FLORA"
+  },
+  "homepage": "https://flora.ai",
+  "repository": "https://github.com/florafauna-ai/flora-mcp-skills",
+  "license": "MIT",
+  "keywords": ["flora", "image-generation", "video-generation", "creative", "batch", "mcp"],
+  "logo": "assets/logo.svg",
+  "mcpServers": "./.mcp.json"
+}
