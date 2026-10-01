@@ -8,6 +8,6 @@
   "repository": "https://github.com/florafauna-ai/flora-mcp-skills",
   "license": "MIT",
   "keywords": ["flora", "image-generation", "video-generation", "creative", "batch", "mcp"],
-  "logo": "assets/logo.svg",
+  "logo": "assets/logo.png",
   "mcpServers": "./.mcp.json"
 }
