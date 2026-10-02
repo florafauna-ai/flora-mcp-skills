@@ -45,6 +45,10 @@ requests keep their HTML/PDF workflows; a saved Deck is not a PDF export.
 
 Not present and easy to reach for: `models.retrieve` (use `models.list().find()`) and `runs.action` (use the `flora_run_action` tool).
 
+## Brand OS source selection
+
+When Brand OS is connected and the user mentions a brand or says "on-brand", list the workspace's brands first. With exactly one published brand, that is the brand; say which one you used. Before generating imagery, pass the brief to context when it accepts one, and review the bank images it returns. Use a match that fits. Generate only for a gap you name. A user's request for new imagery is a named gap: show the best match, then generate. Permission to generate does not mean the bank lacks a fit. A bank that failed to load is not empty: say so. The subject comes from the brief; the treatment from the brand. Every skill below follows this step.
+
 ## What this skill does not do
 
 It does not generate anything. Once routed, load the specific skill and follow it — that file holds the model choices, cost numbers, and failure modes this one deliberately omits.

@@ -47,6 +47,10 @@ Rules the client cannot supply are **not** rules you invent. Mark them "not spec
 
 If the client cannot supply rules for any dimension, stop. There is no standard, so there is no audit — there is only your opinion, and you should say that plainly rather than deliver it as findings.
 
+### Brand OS source selection
+
+When the brand is published in Brand OS, its context is the standard: read it rather than reconstruct the rules from a PDF. Audit where each image came from against the rule the set was made under. Before generating imagery, pass the brief to context when it accepts one, and review the bank images it returns. Use a match that fits. Generate only for a gap you name. A user's request for new imagery is a named gap: show the best match, then generate. Permission to generate does not mean the bank lacks a fit. A bank that failed to load is not empty: say so. The subject comes from the brief; the treatment from the brand. A generated image where a bank match fit, with no gap named, is a **Fix** finding; cite the match's asset_id as the evidence.
+
 ## Step 2 — Read the set, not the assets
 
 Pull the set with `flora_list_assets({ project_id })` — or `flora_list_canvas_nodes({ project_id })` for what is actually on the canvas. The two disagree: an action's output is an asset but never a canvas node, so a set audited from the canvas alone silently omits every resize and composite.
