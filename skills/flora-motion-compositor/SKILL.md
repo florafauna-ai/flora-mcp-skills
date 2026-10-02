@@ -112,6 +112,17 @@ FONTS         resolved by human name from the system font directories. A missing
 **Never screenshot a screenshot.** Re-capturing a scaled UI puts a second
 resampling grid over the first and it moirés under the tilt.
 
+### Brand OS source selection
+
+For a branded shot, photos come from the brand's imagery bank before any plate
+is generated. Before generating imagery, pass the brief to context when it
+accepts one, and review the bank images it returns. Use a match that fits.
+Generate only for a gap you name. A user's request for new imagery is a named
+gap: show the best match, then generate. Permission to generate does not mean
+the bank lacks a fit. A bank that failed to load is not empty: say so. The
+subject comes from the brief; the treatment from the brand. Download a match from its url and report the asset_id it came
+from; never re-encode it to save space.
+
 ## Step 2 — the scene graph
 
 One JSON file per shot. Layers, each with keyframed properties:
