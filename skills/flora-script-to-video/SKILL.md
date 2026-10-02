@@ -100,6 +100,16 @@ Pick a single image and pass it into every keyframe generation:
 The reference is locked before the batch fires. Changing it mid-batch means the shots
 before and after disagree, which is the exact failure this stage exists to prevent.
 
+### Brand OS source selection
+
+For a branded film, check the brand's imagery bank before generating keyframe 1.
+Before generating imagery, pass the brief to context when it accepts one, and review
+the bank images it returns. Use a match that fits. Generate only for a gap you name.
+A user's request for new imagery is a named gap: show the best match, then generate.
+Permission to generate does not mean the bank lacks a fit. A bank that failed to load is not empty: say so. The
+subject comes from the brief; the treatment from the brand. A bank match that fits
+can be the locked reference; report its asset_id.
+
 ### How the reference actually reaches the model
 
 > **Image inputs to a generation are `params.image_url` — singular, a plain string.**
