@@ -1,14 +1,21 @@
 {
   "name": "flora-mcp-skills",
+  "displayName": "FLORA",
   "description": "Hand-tested workflows for FLORA's MCP server. Batch generation, refine loops, script-to-video, technique runs, mockup decks, PDP sets, brand ad pipelines and canvas iteration — bundled with the FLORA MCP server so one install gets you from nothing to a running pipeline.",
   "version": "0.11.3",
   "author": {
     "name": "FLORA",
-    "url": "https://flora.ai"
+    "url": "https://flora.ai",
+    "email": "support@florafauna.ai"
   },
   "homepage": "https://github.com/florafauna-ai/flora-mcp-skills",
   "repository": "https://github.com/florafauna-ai/flora-mcp-skills",
   "license": "MIT",
+  "icon": "./assets/logo.png",
+  "documentationUrl": "https://docs.flora.ai",
+  "supportUrl": "https://github.com/florafauna-ai/flora-mcp-skills/issues",
+  "privacyPolicyUrl": "https://flora.ai/legal/privacy-notice",
+  "termsOfServiceUrl": "https://flora.ai/legal/terms-of-service",
   "keywords": [
     "flora",
     "batch",

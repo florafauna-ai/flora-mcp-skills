@@ -438,6 +438,32 @@ directly. It has a **different, larger tool vocabulary** — `flora_run_batch`,
 some skills explicitly distinguish that path. If you are writing a skill against the browser surface,
 check its tool names separately; they are not interchangeable with the hosted server's.
 
+## Data and privacy
+
+This plugin is Markdown skills plus a reference to FLORA's hosted MCP server. It has no
+hooks, no background processes and no telemetry of its own.
+
+- **What goes to FLORA.** When Claude calls a FLORA tool, the plugin sends what that
+  call needs to `https://agents.flora.ai/mcp`: prompts, reference images and files you
+  provide, model and technique choices, and project or canvas content you ask it to
+  read or change. You sign in with your own FLORA account over OAuth; nothing is sent
+  until you connect. Generations run against your FLORA account and use its credits,
+  and results are stored in your FLORA workspace and served from `media.flora.ai`.
+- **What stays local.** `flora-motion-compositor` includes one readable Python script,
+  `scripts/comp.py`, that renders frames on your machine with ffmpeg and, for SVG
+  input, headless Chrome. It makes no network calls. The deck skills render HTML and
+  PDFs locally with headless Chrome in the same way.
+- **Other services, only when you ask.** A few skills describe steps in tools you
+  already use — fetching trend sources you name (`flora-trend-board`), posting boards
+  to a team channel, or leaving paused ads in Meta Ads Manager
+  (`flora-brand-ad-pipeline`). Those steps run through connectors or credentials you set
+  up yourself; the plugin ships none.
+
+FLORA's [Privacy Notice](https://flora.ai/legal/privacy-notice) and
+[Terms of Service](https://flora.ai/legal/terms-of-service) apply to data sent to FLORA.
+Questions: [open an issue](https://github.com/florafauna-ai/flora-mcp-skills/issues) or
+email support@florafauna.ai.
+
 ## Licence
 
 MIT. See [LICENSE](LICENSE).
