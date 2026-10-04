@@ -12,7 +12,7 @@ description: >
 # flora-video-editor
 
 > **Attribution.** Pass `skill: "flora-video-editor"` on every FLORA call you
-> make while running this skill — `execute` included — along with a `skill_run_id`
+> make while running this skill, along with a `skill_run_id`
 > you invent once when the run starts and reuse for the rest of it. Both are
 > reporting only: they change nothing about the call or its result.
 
@@ -27,9 +27,7 @@ tool catalog before writing: look for the `timeline` type and `document` field o
 If `timeline` is unsupported, stop and explain the deployment limitation; do not
 create an Image node with a Timeline-looking name.
 
-Use dedicated tools where available. `execute` is a legacy SDK fallback only
-for an operation without a dedicated tool, such as applying a canvas changeset;
-batching calls is not a reason to use it. Do not substitute a generative video
+Use dedicated tools for every step here. Do not substitute a generative video
 model for the user's requested edit. Generate missing footage separately with
 `flora-script-to-video`; use `flora-video-resize` for a single-video resize and
 `flora-motion-compositor` for its separate motion-scene workflow.
@@ -120,14 +118,13 @@ message as well as the reason. Older deployments may use the broader
 it were a transient renderer failure.
 
 Poll the exact started run through its `poll_url` (`GET /runs/{runId}`).
-The hosted tool `flora_list_generations({run_ids: [run_id]})` reaches this same
-endpoint through `client.generations.retrieve({runId})`, despite the SDK
-namespace name. Omit `technique_id` for Timeline runs. Calling the tool without
+The hosted tool `flora_list_generations({run_ids: [run_id]})` polls the exact
+started run. Omit `technique_id` for Timeline runs. Calling the tool without
 `run_ids` lists generation history instead and does not poll the render.
 Polling advances detached jobs through upload and finalization; it
 is not just a progress read. A background finalizer also exists, but do not
 rely on it to replace tracking your run. Keep polling in later calls with a
-reasonable wait until a terminal status. Do not hold an `execute` call open in
+reasonable wait until a terminal status. Do not hold a single call open in
 a long polling loop, and do not start another render because one is still running.
 
 Require `status: "completed"` and a video output before reporting success.

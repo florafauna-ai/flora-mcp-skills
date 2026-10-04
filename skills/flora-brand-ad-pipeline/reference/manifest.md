@@ -65,9 +65,9 @@ recorded state — not restarting the pipeline and hoping the later stages are i
 ## Rules
 
 - **Write `flora_run_id` at fire time.** A generation you fired and did not record is
-  billing now and cannot be identified later. `Promise.allSettled` exists so that one
-  rejected create does not discard the ids of the items that did fire; the manifest
-  exists so those ids outlive the call.
+  billing now and cannot be identified later. one rejected entry must not
+  discard the ids of the items that did fire; the manifest exists so those ids
+  outlive the call.
 - **Write one row at a time downstream.** Batching the Meta writes to the end means one
   failure loses every id in the batch, and the ads still exist.
 - **Read before proposing.** The first thing a resumed campaign reports is what is

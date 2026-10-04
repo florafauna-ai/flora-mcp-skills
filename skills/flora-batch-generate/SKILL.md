@@ -3,8 +3,8 @@ name: flora-batch-generate
 description: >
   Turn a structured list — products, campaign variants, SKUs, scenes, localisations —
   into one parallel batch of FLORA generations under a single consistent style. Fires
-  every item at once through generations.create(), polls the whole batch with one
-  generations.list() call, and settles cost and failures per item. Use when the input
+  every item at once through flora_create_generations, polls the whole batch with one
+  flora_list_generations call, and settles cost and failures per item. Use when the input
   is a list, spreadsheet, folder, or set of variants and the output is one asset per
   row. Also use when someone asks for "a bunch of", "one for each", "all our", or
   hands over a CSV. Do not use for a single item, and do not use when each item needs
@@ -15,7 +15,7 @@ description: >
 
 Hosted MCP generation inputs are plural: call `flora_create_generations` with `{ "generations": [{ "workspace_id": "ws_…", "project_id": "prj_…", "type": "image", "prompt": "…" }] }` (1–20 items). Put per-generation fields, including optional `model`, `params`, and `reference_node_ids`, inside each item. Read `generations[]` in the response; retain successful entries' `run_id` and handle failures individually. Poll `flora_list_generations` with `{ "run_ids": ["run_…"] }`, even for one run; add `technique_id` for technique runs. Never retry successful items because another item failed.
 
-Use dedicated tools for this workflow, including batches. `execute` is deprecated; use it only for an SDK operation without a dedicated tool. SDK examples below describe orchestration: use the corresponding dedicated tools, issue independent calls concurrently, retain every run id, and poll in later calls. Do not choose `execute` just to combine calls.
+Use dedicated tools for this workflow, including batches. SDK examples below describe orchestration: use the corresponding dedicated tools, issue independent calls concurrently, retain every run id, and poll in later calls.
 
 ## What it is
 
@@ -71,18 +71,9 @@ Plan, fire, poll, settle. Submit up to 20 independent requests per
 
 Nothing here spends. Everything here prevents spend.
 
-```ts
-async function run(client) {
-  const models = await client.models.list({ type: "image", limit: 100 })
-  const m = models.getPaginatedItems().find((x) => x.model_id === "t2i-flux-2-klein-4b")
-  return {
-    model: m.model_id,
-    credits_each: m.estimated_credits,   // 4
-    seconds_each: m.estimated_seconds,   // 25
-    params: m.params,                    // the ONLY valid param names and enum values
-  }
-}
-```
+`flora_list_models` returns what one call needs: `model_id`, `estimated_credits`,
+`estimated_seconds`, and `params` — the ONLY valid param names and enum values.
+Pick the row by `model_id` (e.g. `t2i-flux-2-klein-4b`).
 
 **Total the cost and stop.** Multiply and state it plainly — *"24 items x 4 credits =
 96 credits, about $0.10. Proceed?"* — then wait for a yes. Do this even when the
@@ -112,49 +103,25 @@ spending. A misparsed CSV column is free to fix now and billable to fix later.
 
 ### 2. Fire — all of them, in one pass, with no gap
 
-```ts
-async function run(client) {
-  const WS = "ws_…", PRJ = "prj_…"
-  const STYLE =
-    "Studio product photograph on a seamless warm-grey backdrop, soft large softbox " +
-    "from camera left, gentle falloff, subtle contact shadow, 85mm, centred, no props, no text."
-  const ITEMS = [
-    { sku: "PO-01", subject: "a matte black ceramic pour-over coffee dripper" },
-    { sku: "WB-04", subject: "a brushed steel insulated water bottle" },
-    // …
+```jsonc
+// flora_create_generations — the whole batch in one call, up to 20 items
+{
+  "generations": [
+    { "workspace_id": "ws_…", "project_id": "prj_…", "type": "image",
+      "prompt": "Studio product photograph on a seamless warm-grey backdrop, soft large softbox from camera left, gentle falloff, subtle contact shadow, 85mm, centred, no props, no text — a matte black ceramic pour-over coffee dripper" },
+    { "workspace_id": "ws_…", "project_id": "prj_…", "type": "image",
+      "prompt": "Studio product photograph on a seamless warm-grey backdrop, soft large softbox from camera left, gentle falloff, subtle contact shadow, 85mm, centred, no props, no text — a brushed steel insulated water bottle" }
   ]
-
-  const settled = await Promise.allSettled(
-    ITEMS.map((item) =>
-      client.generations.create({
-        workspace_id: WS,
-        project_id: PRJ,
-        type: "image",
-        prompt: `${item.subject}. ${STYLE}`,
-        model: "t2i-flux-2-klein-4b",
-        params: { aspect_ratio: "square_1_1" },
-      }),
-    ),
-  )
-
-  const fired: Record<string, string> = {}
-  const rejected: string[] = []
-  settled.forEach((r, i) => {
-    if (r.status === "fulfilled") fired[r.value.run_id] = ITEMS[i].sku
-    else rejected.push(`${ITEMS[i].sku}: ${r.reason?.message ?? r.reason}`)
-  })
-
-  return { project_id: PRJ, fired, rejected }   // RETURN the map. It is the batch.
 }
 ```
 
-**`Promise.allSettled`, never `Promise.all`.** One rejected create must not discard the
-run_ids of the items that did fire. With `Promise.all` a single 400 throws away the
-whole array and you have billed generations you can no longer identify — they are
-running, they will charge, and nothing in the transcript knows their ids.
+The response keeps input order: every entry reports `index` and `ok`, a
+`run_id` on success or an `error` on failure. One rejected item never discards
+the `run_id`s of the items that did fire — those are billed and running, and
+nothing but that map ties a run back to the row it came from.
 
 **Return the `run_id → item` map and log it.** Variables do not persist between
-`execute` calls. That map is the only link between a run and the row it came from;
+calls. That map is the only link between a run and the row it came from;
 losing it means a completed batch you cannot report on.
 
 **No pacing.** Measured: six concurrent creates completed the fire phase in **3.1
@@ -165,29 +132,15 @@ mode wearing a safety costume. The two real exceptions are named under Gotchas.
 
 ### 3. Poll — one call for the whole batch
 
-```ts
-async function run(client) {
-  const PRJ = "prj_…"
-  const FIRED = { "run_a": "PO-01", "run_b": "WB-04" /* …from phase 2 */ }
-
-  const page = await client.generations.list({ project_id: PRJ, limit: 100 })
-
-  const byRun: Record<string, any> = Object.fromEntries(
-    page.getPaginatedItems().map((g) => [g.run_id, g]),
-  )
-  const terminal: any[] = []
-  const running: string[] = []
-  for (const [runId, sku] of Object.entries(FIRED)) {
-    const g = byRun[runId]
-    if (g && (g.status === "completed" || g.status === "failed")) {
-      terminal.push({ sku, status: g.status, url: g.outputs?.[0]?.url, error_code: g.error_code })
-    } else {
-      running.push(sku)
-    }
-  }
-  return { total: Object.keys(FIRED).length, settled: terminal.length, running, terminal }
-}
+```jsonc
+// flora_list_generations — one history page covers the whole batch
+{ "project_id": "prj_…", "limit": 100 }
+// …or exactly the fired ids: { "run_ids": ["run_…", "run_…"] } (max 20)
 ```
+
+Join the page back to your `run_id → item` map: `status: "completed"` entries
+carry `outputs`, `failed` entries carry the error code, everything else is
+still running.
 
 **One `list()` covers the batch. `retrieve()` covers one item.** That is the whole
 argument, and it is worth the measured numbers because the serial habit is strong:
@@ -288,58 +241,37 @@ anything else goes in the report for the user to decide.
 
 ### Retrying safely
 
-**The SDK's `idempotencyKey` request option does nothing on this client. Use the
-header.**
-
-```ts
-// INERT — measured: two calls with the same key produced two run_ids and billed twice.
-client.generations.create(body, { idempotencyKey: key })
-
-// CORRECT — the second call returns 409 idempotency_duplicate.
-client.generations.create(body, { headers: { "Idempotency-Key": key }, maxRetries: 0 })
-```
-
-The client declares an `idempotencyHeader` and never assigns it, so the option is read
-and dropped. This matters because the option is the obvious thing to reach for and its
-failure is invisible: the retry succeeds, the user is billed twice, nothing errors.
-
-What the header actually gives you, and what it does not:
-
-- It is a **duplicate suppressor, not a response replayer.** A repeated key returns a
-  409 error, not the original run. You cannot use it to recover a lost `run_id`.
-- The key is **released when the request fails**. That is the designed use: a create
-  that returned a network error or a 5xx can be safely re-fired with the same key, and
-  you will not double-bill if the first one actually landed.
-- A run that failed *after* it was created has **burned its key for two hours**
-  (TTL 7200s). Retrying that item needs a *new* key — suffix it, `${sku}-r2`.
-- Keys are scoped to workspace + operation + destination, so `sku` alone is a safe key
-  within one project and collides across two.
-- Set `maxRetries: 0` on any call you expect might duplicate. The SDK treats 409 as
-  retryable, so a duplicate burns **~1.8s** in retries that can never succeed.
+Never re-fire the whole batch after a partial failure: successful entries already
+spent credits, and a timed-out call may still have started runs. Read first —
+`flora_list_generations` with the batch's `project_id` (or the `run_id → item` map's
+`run_ids`, up to 20) — then re-fire only the items that genuinely have no run.
+A run that failed *after* it was created still burned its credits; inspect its error
+before deciding whether the same request can succeed on a second try.
 
 ## Gotchas
 
 ```
 SANDBOX
-execute timeout       ~5 minutes total per call, 30s per HTTP request. A 40-item batch
+call window           a single call should not hold a long batch. A 40-item batch
                       on a ~107s model will NOT fire-and-finish inside one call. This
                       is why fire and poll are separate calls: fire, return the run_id
-                      map, poll in a later call. Never build a loop that must outlive
-                      the sandbox.
-no variables persist   between execute calls. Return or log the run_id -> item map or
+                      map, poll in a later call. Never build a wait that must outlive
+                      one call.
+no variables persist  between calls. Return or log the run_id -> item map or
                       the batch is unrecoverable.
 no filesystem         every deliverable is a URL. Never claim to have written a file.
 
 FIRING
-Promise.allSettled    not Promise.all. One rejection must not discard the run_ids of
-                      items that did fire — those are billed and now untrackable.
+per-entry isolation    one rejected entry never discards the run_ids of
+                      items that did fire — those are billed and now untrackable
+                      without the response's index map.
 no pacing needed      6 concurrent creates fired in 3.1s, no throttling. Do not stagger.
 Krea models           the exception: they rate-limit hard and lose most of a concurrent
                       batch to GENERATION_DOWNSTREAM_SERVICE_ERROR. Pace those at ~5s.
 rate limit scope      keyed on WORKSPACE, not user or key. A big batch competes with
                       itself and with teammates on the same workspace. 429 is
-                      `rate_limited`; the SDK auto-retries it with backoff
-                      (maxRetries defaults to 2), so most of it self-heals.
+                      `rate_limited`; retry with backoff after it clears,
+                      most of it self-heals.
 
 POLLING
 limit: 100            always explicit. 100 is the API maximum; the MCP tool's default
@@ -350,27 +282,25 @@ generation_id         is the same value as run_id, not a second key.
 COST
 params not validated  an unknown param VALUE is accepted, runs, and bills at the
                       default. Only an unknown MODEL is a clean 400. Validate against
-                      models.list() params before firing.
+                      flora_list_models({ model_id }) params before firing.
 charged_cost at fire  is a quote. Measured elsewhere at 0.253 quoted vs 0.873 charged.
 charged_cost on list  is eventually consistent — absent for a moment after a run goes
                       terminal. Summing at detection undercounted by 17%. Re-read.
 failures refund       a failed run generally does not cost. A retry is a new
                       generation and does.
 
-IDEMPOTENCY
-generations           header only: headers: { "Idempotency-Key": … }
-techniques.runs       body field: { idempotency_key: … }
-                      Do not carry the pattern across; each ignores the other's shape.
+RETRY SAFELY
+inspect first         read flora_list_generations before re-firing a possibly-started
+                      item — a duplicate create is billed, not deduped.
 ```
 
 ## Batching a technique instead of a model
 
 When every item needs the *same multi-step treatment* rather than the same prompt —
-background swap, relight, sketch-to-render — batch `techniques.runs.create()` instead
-of `generations.create()`. The law and the four phases are unchanged. Two differences:
-
-- The idempotency key is a **body field**, `idempotency_key`, not a header.
-- Cost comes from the technique's `run_cost`, not from a model's `estimated_credits`.
+background swap, relight, sketch-to-render — fire one `flora_run_technique` per item,
+all in parallel, instead of one `flora_create_generations` batch. The law and the four
+phases are unchanged. One difference: cost comes from the technique's `run_cost`, not
+from a model's `estimated_credits`.
 
 Resolve one technique for the whole batch. Items needing two techniques are two
 batches.
