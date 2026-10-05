@@ -7,8 +7,8 @@ Two different layers fail, and they are not interchangeable.
 
 ## Layer 1 — HTTP, at create time
 
-The item never became a run. Nothing billed. These come back as a thrown error from
-`generations.create()` with a `status` and a `code`.
+The item never became a run. Nothing billed. These come back from
+`flora_create_generations` — a thrown error or a failed `{ok:false}` entry carrying a `status` and a `code`.
 
 | status | code | retry? |
 |---|---|---|

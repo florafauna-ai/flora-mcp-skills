@@ -12,7 +12,7 @@ description: >
 # flora-deck-editor
 
 > **Attribution.** Pass `skill: "flora-deck-editor"` on every FLORA call you
-> make while running this skill — `execute` included — along with one invented
+> make while running this skill, along with one invented
 > `skill_run_id` reused for this run. Both fields are reporting only.
 
 The saved Deck document owns the slides. A canvas label, graph edge, image of a
@@ -24,9 +24,8 @@ Check the current tool catalog for `flora_add_to_canvas` accepting `add`
 entries with `type: "deck"` and a `document`, for
 `flora_get_canvas_node_document`, and for `flora_update_canvas_node_document`,
 the whole-document write under `base_revision`. If the update tool is absent,
-the hosted `execute` SDK's `client.projects.canvas.applyChangeset({ update })`
-is the equivalent fallback; its client is already authenticated. Do not request
-credentials or use `execute` for operations that have dedicated tools.
+report that this deployment cannot edit Deck documents rather than
+falling back to code. Do not request credentials.
 
 These instructions require the hosted document tools. WebMCP's Deck commands
 are a different surface; do not assume they accept this full-document contract.
@@ -62,45 +61,20 @@ an existing Deck. A read-only request ends after inspection; it needs no write.
 Send the whole modified document to
 `flora_update_canvas_node_document({workspace_id, project_id, node_id, document, base_revision})`
 with the observed revision as `base_revision`. Keep initial inspection and
-post-write readback on `flora_get_canvas_node_document`. If only the `execute`
-fallback is available, read and modify the document inside `run(client)` and
-write it back with
-`client.projects.canvas.applyChangeset({ workspaceId, projectId, update: [{ id, document, base_revision }] })`;
-do not embed the complete document in `code`, which is limited to 100,000
-characters, and return a compact result rather than the full document.
+post-write readback on `flora_get_canvas_node_document`.
 
-For example, to edit one inline title through that fallback, replace the IDs,
-inspected revision, and requested text below with the values from this task:
+For example, to edit one inline title:
 
-```js
-async function run(client) {
-  const workspaceId = "workspace_id"
-  const projectId = "project_id"
-  const nodeId = "node_id"
-  const inspectedRevision = 7
-  const current = await client.projects.canvas.getNodeDocument({ workspaceId, projectId, nodeId })
-  if (current.revision !== inspectedRevision) {
-    throw new Error("Revision changed; reread and reconcile before editing")
-  }
-  if (current.document.kind !== "deck") throw new Error("Expected a Deck document")
-  const document = structuredClone(current.document)
-  const slide = document.slides.find((slide) => slide.id === "slide_1")
-  const title = slide?.document.layers["title"]
-  if (title?.content_type !== "text" || title.content.kind !== "inline") {
-    throw new Error("Expected the inspected inline text layer")
-  }
-  title.content.text = "Revised"
-  const result = await client.projects.canvas.applyChangeset({
-    workspaceId,
-    projectId,
-    update: [{ id: nodeId, document, base_revision: current.revision }],
-  })
-  return { node_id: nodeId, applied: result.applied, warnings: result.warnings }
-}
-```
+1. `flora_get_canvas_node_document` returns the document and its `revision`.
+   Re-read it if the revision no longer matches what you inspected.
+2. In your copy, find the slide by `slides[].id`, then the layer under
+   `slides[].document.layers` (a `content_type: "text"` layer whose content is
+   `kind: "inline"` carries editable `text`).
+3. `flora_update_canvas_node_document` applies the whole edited document back
+   under `base_revision` set to the revision you read.
 
-Only embed the resolved IDs, inspected revision, and requested edits; values
-do not persist between calls.
+Nothing persists between calls — carry the inspected revision forward
+explicitly rather than assuming an earlier read is still current.
 On a changed revision or `revision_conflict`, reread and reconcile with the newest
 document. Never retry the stale body without its revision. If concurrent edits
 keep conflicting, report the conflict and retain the intended change for a

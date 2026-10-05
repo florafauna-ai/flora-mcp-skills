@@ -41,9 +41,8 @@ requests keep their HTML/PDF workflows; a saved Deck is not a PDF export.
 ## How to call FLORA
 
 - **Named tools** (generation creation, `flora_run_technique`, `flora_list_models`, …) — use for single actions and batches. Issue independent calls concurrently, save every returned run id, and poll in later calls.
-- **`execute` is deprecated.** Use only for an SDK operation without a dedicated tool. Batching is not a reason to use it. Limits: ~5 min per call, 30 s per HTTP request, no state between calls.
 
-Not present and easy to reach for: `models.retrieve` (use `models.list().find()`) and `runs.action` (use the `flora_run_action` tool).
+One-off reads fold into the named tools: a single model's row (with its full params) comes from `flora_list_models({ model_id })`, and a single ad-hoc action is `flora_run_action`.
 
 ## Brand OS source selection
 
