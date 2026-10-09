@@ -405,16 +405,13 @@ maintainer will review it and include accepted changes in a future update.
 - **Workflow instructions** — `flora_discover_skills` lists available skills; pass a
   skill name to load its instructions.
 - **API and SDK docs** — [docs.flora.ai](https://docs.flora.ai).
-- **Two ways to call FLORA from a skill:**
-  - **Named tools (preferred)** — `flora_create_generations`, `flora_list_generations`,
-    `flora_run_technique`, `flora_list_models` and friends. Create 1–20 generations with
-    `{ "generations": [...] }`, including a one-item array for a single generation.
-    Retain successful run IDs and poll with `{ "run_ids": [...] }`; include
-    `technique_id` for technique runs. Omit run IDs only to list history. Never retry
-    a whole batch because one submission failed.
-  - **`execute` (deprecated fallback)** — runs TypeScript against a pre-authenticated
-    SDK client. Use only for operations without a dedicated tool, not to batch calls.
-    Limits: ~5 minutes per call, 30s per HTTP request, and no variables persist between calls.
+- **Calling FLORA from a skill** — use the named tools: `flora_create_generations`,
+  `flora_list_generations`, `flora_run_technique`, `flora_list_models` and friends.
+  Create 1–20 generations with `{ "generations": [...] }`, including a one-item array for
+  a single generation. Retain successful run IDs and poll with `{ "run_ids": [...] }`;
+  include `technique_id` for technique runs. Omit run IDs only to list history. Never
+  retry a whole batch because one submission failed. The hosted server no longer has an
+  `execute` code tool; `flora_list_tools` lists what the connection offers.
 
 ### Connection reference
 

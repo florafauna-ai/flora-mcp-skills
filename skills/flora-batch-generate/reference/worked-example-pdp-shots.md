@@ -10,13 +10,8 @@ the subject noun changes.
 
 ## Phase 1 — plan
 
-```ts
-async function run(client) {
-  const models = await client.models.list({ type: "image", limit: 100 })
-  const m = models.getPaginatedItems().find((x) => x.model_id === "t2i-flux-2-klein-4b")
-  return { credits: m.estimated_credits, seconds: m.estimated_seconds, params: m.params }
-}
-```
+`flora_list_models` returns the model row: `model_id`, `estimated_credits`,
+`estimated_seconds`, and `params` — the only valid param names and enum values.
 
 ```
 credits: 4        seconds: 25
@@ -33,32 +28,21 @@ under Plan.
 The style string is built once and concatenated onto each subject. That is the whole
 consistency mechanism; there is nothing cleverer needed.
 
-```ts
-const STYLE =
-  "Studio product photograph on a seamless warm-grey backdrop, soft large softbox " +
-  "from camera left, gentle falloff, subtle contact shadow, 85mm, centred, no props, no text."
+The style string is built once and appended to each subject — that is the whole
+consistency mechanism. All six went in one `flora_create_generations` call:
 
-const ITEMS = [
-  { sku: "PO-01", subject: "a matte black ceramic pour-over coffee dripper" },
-  { sku: "WB-04", subject: "a brushed steel insulated water bottle" },
-  { sku: "AP-09", subject: "a folded oatmeal linen apron" },
-  { sku: "CB-02", subject: "a walnut wood cutting board, rectangular" },
-  { sku: "MJ-07", subject: "a clear glass measuring jug with printed markings" },
-  { sku: "SB-03", subject: "a stack of three speckled stoneware bowls" },
-]
-
-const settled = await Promise.allSettled(
-  ITEMS.map((item) =>
-    client.generations.create({
-      workspace_id: WS,
-      project_id: PRJ,
-      type: "image",
-      prompt: `${item.subject}. ${STYLE}`,
-      model: "t2i-flux-2-klein-4b",
-      params: { aspect_ratio: "square_1_1" },
-    }),
-  ),
-)
+```jsonc
+{
+  "generations": [
+    { "workspace_id": "ws_…", "project_id": "prj_…", "type": "image",
+      "prompt": "a matte black ceramic pour-over coffee dripper. Studio product photograph on a seamless warm-grey backdrop, …",
+      "model": "t2i-flux-2-klein-4b", "params": { "aspect_ratio": "square_1_1" } },
+    { "workspace_id": "ws_…", "project_id": "prj_…", "type": "image",
+      "prompt": "a brushed steel insulated water bottle. Studio product photograph …",
+      "model": "t2i-flux-2-klein-4b", "params": { "aspect_ratio": "square_1_1" } },
+    // … the other four items, same shape
+  ]
+}
 ```
 
 ```
@@ -70,7 +54,7 @@ quoted at create  $0.004 each
 
 ## Phase 3 — poll
 
-One `generations.list({ project_id, limit: 100 })` per cycle, five seconds apart.
+One `flora_list_generations({ project_id, limit: 100 })` per cycle, five seconds apart.
 
 ```
 cycles to all-terminal   3
@@ -117,11 +101,9 @@ Run alongside the batch, on the same project:
 - **`model: "t2i-does-not-exist"`** — clean `400 input_validation_error`, free, with
   the accessible model list in the message.
 - **`project_id: "prj_nope"`** — opaque `500 unknown_error`, not a 404.
-- **`{ idempotencyKey: k }` twice** — two distinct `run_id`s, billed twice. The option
-  is inert on this client.
-- **`headers: { "Idempotency-Key": k }` twice** — second call `409
-  idempotency_duplicate`, as intended. With default `maxRetries`, that doomed duplicate
-  spent 1,798 ms in retries before giving up.
+- **The same request fired twice** — two distinct `run_id`s, billed twice. Inspect
+  history before re-firing an item that may already have started (see Retrying safely
+  in `SKILL.md`).
 
 Total cost of the entire hand-test, batch and edge cases together: **11 generations,
 about $0.05.**

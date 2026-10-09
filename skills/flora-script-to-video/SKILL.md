@@ -12,10 +12,10 @@ description: >
 
 # flora-script-to-video
 
-Use dedicated tools for this workflow, including batches. `execute` is deprecated; use it only for an SDK operation without a dedicated tool. SDK examples below describe orchestration: use the corresponding dedicated tools, issue independent calls concurrently, retain every run id, and poll in later calls. Do not choose `execute` just to combine calls.
+Use dedicated tools for this workflow, including batches. SDK examples below describe orchestration: use the corresponding dedicated tools, issue independent calls concurrently, retain every run id, and poll in later calls.
 
 > **Attribution.** Pass `skill: "flora-script-to-video"` on every FLORA call you
-> make while running this skill — `execute` included — along with a `skill_run_id`
+> make while running this skill, along with a `skill_run_id`
 > you invent once when the run starts and reuse for the rest of it. Both are
 > reporting only: they change nothing about the call or its result.
 
@@ -120,7 +120,7 @@ get a text-to-image render of your prompt with the reference nowhere in it, and 
 error anywhere to tell you.
 
 Confirm the field on the model you actually chose before firing the batch. Call
-`models.list()` and read its `params`. Two things you will find:
+`flora_list_models({ model_id })` and read the row's `params`. Two things you will find:
 
 - Reference inputs are usually **implied by the endpoint's modality prefix** (`i2i-`,
   `i2v-`) rather than declared as a named parameter. An `i2v-` model takes an image
@@ -136,35 +136,24 @@ Confirm the field on the model you actually chose before firing the batch. Call
 With the reference locked the shots are independent, so fire them together. Firing them
 one at a time turns one wait into N waits for no benefit.
 
-```ts
-const settled = await Promise.allSettled(
-  SHOTS.map((shot) =>
-    client.generations.create({
-      workspace_id: WS, project_id: PRJ, type: "image",
-      prompt: `${shot.frame}. ${STYLE}`,
-      model: "t2i-flux-2-klein-4b",
-      params: { image_url: REFERENCE, aspect_ratio: "landscape_16_9" },
-    }),
-  ),
-)
-
-const fired: Record<string, string> = {}   // run_id -> shot id
-const rejected: string[] = []
-settled.forEach((r, i) => {
-  if (r.status === "fulfilled") fired[r.value.run_id] = SHOTS[i].id
-  else rejected.push(`${SHOTS[i].id}: ${r.reason?.message ?? r.reason}`)
-})
-return { fired, rejected }        // RETURN the map — variables do not persist
+```jsonc
+// flora_create_generations — every keyframe in one call (up to 20 items)
+{ "generations": [
+    { "workspace_id": "ws_…", "project_id": "prj_…", "type": "image",
+      "prompt": "<shot frame>. <STYLE>",
+      "model": "t2i-flux-2-klein-4b",
+      "params": { "image_url": "<reference url>", "aspect_ratio": "landscape_16_9" } } ] }
 ```
 
-**`Promise.allSettled`, never `Promise.all`.** One rejected create must not discard the
-run ids of the shots that did fire — those are billed and would become untrackable.
+The response keeps input order — each entry reports `index` and `ok`. Keep the
+`run_id → shot id` map: one rejected shot never discards the run ids of the shots that
+did fire — those are billed and would become untrackable without the map.
 
 Then poll the whole batch with **one** call per cycle, not one call per shot:
 
-```ts
-const page = await client.generations.list({ project_id: PRJ, limit: 100 })
-const byRun = Object.fromEntries(page.getPaginatedItems().map((g) => [g.run_id, g]))
+```jsonc
+// flora_list_generations — one history page covers every keyframe
+{ "project_id": "prj_…", "limit": 100 }
 ```
 
 Pass `limit: 100` explicitly — 100 is the API maximum and the default is lower, so a
@@ -199,17 +188,12 @@ i2t-gemini-3-7-flash-i2t        0 credits   ~6s
 
 So, per keyframe:
 
-```ts
-const check = await client.generations.create({
-  workspace_id: WS, project_id: PRJ, type: "text",
-  model: "i2t-gemini-3-7-flash-i2t",
-  params: { image_urls: [REFERENCE, keyframeUrl] },   // PLURAL. ARRAY.
-  prompt:
-    "IMAGE 1 is the style reference. IMAGE 2 is a new keyframe.\n" +
-    "First DESCRIBE both, then judge whether IMAGE 2 holds the same character, " +
-    "palette, lighting and rendering style as IMAGE 1.\n\n" +
-    'Return ONLY JSON: {"ref":"...","frame":"...","consistent":true|false,"drift":["..."]}',
-})
+```jsonc
+// flora_create_generations — one text judge per keyframe
+{ "generations": [{ "workspace_id": "ws_…", "project_id": "prj_…", "type": "text",
+    "model": "i2t-gemini-3-7-flash-i2t",
+    "params": { "image_urls": ["<reference url>", "<keyframe url>"] },   // PLURAL. ARRAY.
+    "prompt": "IMAGE 1 is the style reference. IMAGE 2 is a new keyframe.\nFirst DESCRIBE both, then judge whether IMAGE 2 holds the same character, palette, lighting and rendering style as IMAGE 1.\n\nReturn ONLY JSON: {\"ref\":\"...\",\"frame\":\"...\",\"consistent\":true|false,\"drift\":[\"...\"]}" }] }
 ```
 
 Two details that decide whether this works:
@@ -236,11 +220,8 @@ then does Stage 3 exist.
 Nothing about the still stage's cost or timing carries over. Pull real numbers before
 firing:
 
-```ts
-const models = await client.models.list({ type: "video", limit: 100 })
-const m = models.getPaginatedItems().find((x) => x.model_id === CHOICE)
-// m.estimated_credits, m.estimated_seconds, m.params
-```
+`flora_list_models` returns `estimated_credits`, `estimated_seconds` and `params`
+per model — pull the row for the model you intend to use.
 
 Measured spread across `i2v` endpoints: **134 to 900+ credits**, and
 `estimated_seconds` from **30 to 360**. Both vary by an order of magnitude, so a number
@@ -263,7 +244,7 @@ means tighter consistency — the model has more evidence of what the character 
 look like. Reach for it when it is available.
 
 **But you have to look it up, not assume it.** Reference capacity is *not* declared in
-`models.list().params` — video models expose only `duration`, `aspect_ratio`,
+the model's `params` — video models expose only `duration`, `aspect_ratio`,
 `resolution`, `seed` and similar. The capability is signalled by the **endpoint's
 modality prefix** instead:
 
@@ -284,9 +265,8 @@ neighbouring approved keyframes, so each clip is anchored to the shots either si
 
 ### Fire and poll as separate calls — this is not optional
 
-The code sandbox gives roughly **five minutes total per `execute` call**, 30 seconds per
-HTTP request. Video endpoints report `estimated_seconds` up to **360**. Some clips
-cannot finish inside a single call *by design*.
+Video endpoints report `estimated_seconds` up to **360**, past any call's
+comfortable wait. Some clips cannot finish inside a single call *by design*.
 
 Building a loop that waits for them returns a **502 Bad Gateway** and you lose the
 run-id map — while the clips keep generating and keep billing, now untrackable. This was
@@ -297,7 +277,7 @@ So:
 
 ```
 call 1   fire every approved keyframe, RETURN { run_id -> shot_id }
-call 2   poll generations.list({ project_id, limit: 100 }), return what is terminal
+call 2   poll flora_list_generations({ project_id, limit: 100 }), return what is terminal
 call 3   poll again if anything is still running
 ```
 
@@ -390,7 +370,7 @@ free judges            i2t/v2t gemini 3.5-flash-lite, 3.6-flash, 3.7-flash = 0 c
 
 VIDEO STAGE COST + TIMING
 never reuse            still-stage numbers. Pull estimated_credits and estimated_seconds
-                       from models.list({ type: "video" }) every time.
+                       from flora_list_models({ type: "video" }) every time.
 measured spread        134 to 900+ credits; 30 to 360 estimated seconds.
 estimated_credits: 0   is a CATALOG GAP, not free. Seedance 2.5 reports 0 with a 300s
                        estimate. Fire one, read settled charged_cost, quote from that.
@@ -414,16 +394,16 @@ transient only         timeouts and provider-unavailable get exactly one retry.
 progress is not done   failed runs report progress: 100 and a completed_at. Key on
                        status === "completed" AND outputs being present.
 
-SANDBOX
-~5 min per call        30s per HTTP request. i2v estimates reach 360s, so some clips
-                       cannot finish inside one call by design.
+CALL BUDGET
+one call, one step     do not hold a single call open for a render; i2v estimates reach
+                       360s, so some clips cannot finish inside one call by design.
 fire and poll apart    a waiting loop returns 502 and loses the run-id map while the
                        clips keep billing. Hit twice while testing this skill.
 return the map         run_id -> shot_id, every call. Variables do not persist.
-Promise.allSettled     never Promise.all — one rejection must not discard the run ids
-                       of shots that did fire.
-limit: 100             explicit on generations.list. The default is lower and silently
-                       truncates a long shot list.
+per-entry isolation    one rejected entry never discards the run ids of
+                       shots that did fire — the index map is the only link back.
+limit: 100             explicit on flora_list_generations. The default is lower and
+                       silently truncates a long shot list.
 
 ASSEMBLY
 no server-side cut     no timeline, no transitions, no export. Deliver ordered clip

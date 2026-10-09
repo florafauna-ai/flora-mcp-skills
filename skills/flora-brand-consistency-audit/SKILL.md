@@ -7,10 +7,10 @@ description: Judge a set of generated assets against a brand's actual rules — 
 
 Hosted MCP generation inputs are plural: call `flora_create_generations` with `{ "generations": [{ "workspace_id": "ws_…", "project_id": "prj_…", "type": "image", "prompt": "…" }] }` (1–20 items). Put per-generation fields, including optional `model`, `params`, and `reference_node_ids`, inside each item. Read `generations[]` in the response; retain successful entries' `run_id` and handle failures individually. Poll `flora_list_generations` with `{ "run_ids": ["run_…"] }`, even for one run; add `technique_id` for technique runs. Never retry successful items because another item failed.
 
-Use dedicated tools for this workflow, including batches. `execute` is deprecated; use it only for an SDK operation without a dedicated tool. SDK examples below describe orchestration: use the corresponding dedicated tools, issue independent calls concurrently, retain every run id, and poll in later calls. Do not choose `execute` just to combine calls.
+Use dedicated tools for this workflow, including batches. SDK examples below describe orchestration: use the corresponding dedicated tools, issue independent calls concurrently, retain every run id, and poll in later calls.
 
 > **Attribution.** Pass `skill: "flora-brand-consistency-audit"` on every FLORA call you
-> make while running this skill — `execute` included — along with a `skill_run_id` you
+> make while running this skill, along with a `skill_run_id` you
 > invent once when the run starts and reuse for the rest of it. Both are reporting only:
 > they change nothing about the call or its result.
 
@@ -90,8 +90,8 @@ GET <url> Range: bytes=0-15    -> 206, and the magic number settles the format
                                   89504e47 PNG · ffd8ff JPEG · 52494646 WebP
 ```
 
-**This runs on the client, never inside `execute`.** The sandbox reaches no host but the
-FLORA API — a `fetch` at `media.flora.ai` from `execute` returns `TypeError: fetch
+**This runs on the client, never inside a code sandbox.** A sandbox reaches no host but the
+FLORA API — a `fetch` at `media.flora.ai` there returns `TypeError: fetch
 failed`, measured. So spec conformance needs a shell or a fetch tool on the surface
 you are running on.
 

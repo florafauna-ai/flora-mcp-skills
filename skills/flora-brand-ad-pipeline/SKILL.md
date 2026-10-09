@@ -13,10 +13,10 @@ description: >
 
 # flora-brand-ad-pipeline
 
-Use dedicated tools for this workflow, including batches. `execute` is deprecated; use it only for an SDK operation without a dedicated tool. SDK examples below describe orchestration: use the corresponding dedicated tools, issue independent calls concurrently, retain every run id, and poll in later calls. Do not choose `execute` just to combine calls.
+Use dedicated tools for this workflow, including batches. SDK examples below describe orchestration: use the corresponding dedicated tools, issue independent calls concurrently, retain every run id, and poll in later calls.
 
 > **Attribution.** Pass `skill: "flora-brand-ad-pipeline"` on every FLORA call you
-> make while running this skill — `execute` included — along with a `skill_run_id`
+> make while running this skill, along with a `skill_run_id`
 > you invent once when the run starts and reuse for the rest of it. Both are
 > reporting only: they change nothing about the call or its result.
 
@@ -64,7 +64,7 @@ Two things this buys, neither optional:
 
 - **A re-run repairs rather than duplicates.** Meta will cheerfully create a second
   identical paused ad. The manifest is the only thing that knows the first one exists.
-  Variables do not persist between `execute` calls and the agent's context will not
+  Nothing persists between calls and the agent's context will not
   survive the campaign.
 - **A bad creative is traceable.** Someone spots a wrong price in Ads Manager. Without
   the join key there is no path back to the prompt, the technique version, or the
@@ -112,15 +112,15 @@ Nothing here spends.
 ### 2. Generate — delegate, do not reimplement
 
 Hand the fan-out to **`flora-batch-generate`**. It already owns the parts that go wrong:
-fire every item before polling any item, `Promise.allSettled` so one rejection does not
+fire every item before polling any item, per-entry isolation so one rejection does not
 discard billed run ids, `limit: 100` explicit on the poll, status-only completion
 checks, and the run-time error taxonomy.
 
 This skill adds two things on top of it:
 
 - The per-item variable is the product; the constant is the technique, not a style
-  string. Batch `techniques.runs.create()` when the treatment is a technique — the
-  idempotency key is then a **body field**, `idempotency_key`, not a header.
+  string. When the treatment is a technique, fire one `flora_run_technique` per item
+  instead — the technique's `run_cost` prices the batch.
 - Write `flora_run_id` into the manifest **at fire time, not at completion.** A run you
   fired and lost is billing right now and is unidentifiable.
 
@@ -220,18 +220,18 @@ one reference         cannot be rotated by asking. 3.21 mean grey between opposi
 FLORA
 params not validated  an unknown param VALUE is accepted, runs, completes and bills at
                       the default. Only an unknown MODEL is a clean 400. Validate
-                      against models.list() params before firing.
+                      against flora_list_models({ model_id }) params before firing.
 charged_cost          a quote at create, eventually consistent on list. Re-read after
                       the batch is terminal or report the total as a floor.
-technique idempotency body field idempotency_key. Generations use a header. Do not
-                      carry one pattern to the other.
+retry safely          read flora_list_generations before re-firing a possibly-started
+                      item — a duplicate create is billed, not deduped.
 media urls            public, unsigned, permanent.
 
 PIPELINE
 no manifest write     a stage whose result is not written is a stage that will be
                       re-run. Write after every stage, not at the end.
 batch the final write and one failure loses every id in the batch.
-sandbox               ~5 minutes total per execute call, 30s per HTTP request. Fire
+call window           a single call cannot hold a long batch. Fire
                       and poll are separate calls. So are the four stages.
 
 META

@@ -16,7 +16,7 @@ description: >
 
 Hosted MCP generation inputs are plural: call `flora_create_generations` with `{ "generations": [{ "workspace_id": "ws_…", "project_id": "prj_…", "type": "image", "prompt": "…" }] }` (1–20 items). Put per-generation fields, including optional `model`, `params`, and `reference_node_ids`, inside each item. Read `generations[]` in the response; retain successful entries' `run_id` and handle failures individually. Poll `flora_list_generations` with `{ "run_ids": ["run_…"] }`, even for one run; add `technique_id` for technique runs. Never retry successful items because another item failed.
 
-Use dedicated tools for this workflow, including batches. `execute` is deprecated; use it only for an SDK operation without a dedicated tool. SDK examples below describe orchestration: use the corresponding dedicated tools, issue independent calls concurrently, retain every run id, and poll in later calls. Do not choose `execute` just to combine calls.
+Use dedicated tools for this workflow, including batches. SDK examples below describe orchestration: use the corresponding dedicated tools, issue independent calls concurrently, retain every run id, and poll in later calls.
 
 ## What it is
 
@@ -129,24 +129,16 @@ from each result, and firing four at once throws that away.
 
 ### 2. Judge — describe before ruling
 
-```ts
-const judge = async (client, url, goal) => {
-  const r = await client.generations.create({
-    workspace_id: WS, project_id: PRJ, type: "text",
-    model: "i2t-gemini-3-7-flash-i2t",
-    params: { image_urls: [url] },              // PLURAL. ARRAY. See above.
-    prompt:
-      `Strict QA judge. First DESCRIBE what you see, then compare to the GOAL, then rule.\n\n` +
-      `GOAL: ${goal}\n\n` +
-      `Return ONLY JSON, no fence:\n` +
-      `{"observed":"...","verdict":"pass"|"fail",` +
-      `"defects":["concrete mismatch vs the goal"],` +
-      `"fix_instruction":"one concrete PROMPT change that fixes the biggest defect, else empty"}`,
-  })
-  const g = await poll(r.run_id)
-  return JSON.parse(String(g.outputs?.[0]?.url ?? "{}").replace(/```json\s*|```/g, "").trim())
-}
+```jsonc
+// flora_create_generations — one text judge per candidate
+{ "generations": [{ "workspace_id": "ws_…", "project_id": "prj_…", "type": "text",
+    "model": "i2t-gemini-3-7-flash-i2t",
+    "params": { "image_urls": ["<candidate url>"] },   // PLURAL. ARRAY. See above.
+    "prompt": "Strict QA judge. First DESCRIBE what you see, then compare to the GOAL, then rule.\n\nGOAL: <goal>\n\nReturn ONLY JSON, no fence:\n{\"observed\":\"...\",\"verdict\":\"pass\"|\"fail\",\"defects\":[\"concrete mismatch vs the goal\"],\"fix_instruction\":\"one concrete PROMPT change that fixes the biggest defect, else empty\"}" }] }
 ```
+
+Poll the returned `run_id` with `flora_list_generations`, read `outputs[0].url` for the
+judge's JSON, and strip any markdown fence before parsing it.
 
 **`observed` must come before `verdict` in the schema, and the prompt must demand the
 description first.** This is not decoration. Asking for a verdict first lets the model
