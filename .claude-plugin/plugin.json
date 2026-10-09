@@ -11,7 +11,7 @@
   "homepage": "https://github.com/florafauna-ai/flora-mcp-skills",
   "repository": "https://github.com/florafauna-ai/flora-mcp-skills",
   "license": "MIT",
-  "icon": "./assets/logo.png",
+  "icon": "./assets/icon.png",
   "documentationUrl": "https://docs.flora.ai",
   "supportUrl": "https://github.com/florafauna-ai/flora-mcp-skills/issues",
   "privacyPolicyUrl": "https://flora.ai/legal/privacy-notice",
