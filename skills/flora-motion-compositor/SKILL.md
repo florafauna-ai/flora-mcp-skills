@@ -41,7 +41,7 @@ One question decides it: **does the subject already exist?**
 | use for | SaaS launch, feature announcement, UI demo, endcard, title | brand film, campaign, fashion, physical product |
 | type | free and perfect | a fight, worked around with stills and f2v pairs |
 | drift | none, by construction | real — no seed, no undo |
-| cost per shot | 0 credits, ~12s of CPU | minutes and credits |
+| cost per shot | $0, ~12s of CPU | minutes and money |
 | cannot | invent a world | hold a wordmark |
 
 **They are not alternatives, they are two halves.** For a software launch most
@@ -91,7 +91,7 @@ STEP 3   render     comp.py -> one mp4 per shot
 STEP 4   cut        cut.json -> the film
 ```
 
-Nothing in that costs a credit except a FLORA plate, if you use one.
+Nothing in that costs money except a FLORA plate, if you use one.
 
 ## Step 1 — assets
 

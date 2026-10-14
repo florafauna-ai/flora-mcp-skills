@@ -27,7 +27,7 @@ when to stop paying to find out.
 The failure this skill exists to prevent has a specific shape. The user doesn't like a
 result. The agent runs the same prompt again. The model returns a different image that
 is wrong in a different way. Nobody wrote down what "wrong" meant, so nobody can tell
-whether round four beat round two. Credits burn at full price while the loop makes no
+whether round four beat round two. Money burns at full price while the loop makes no
 progress, because **nothing in it is measuring anything.**
 
 That is not iteration. It is a slot machine with a polite interface.
@@ -46,9 +46,9 @@ not ready to spend again.** Go and look at the image first. Looking is free.
 FLORA has image-to-text models. Three of them cost **nothing**:
 
 ```
-i2t-gemini-3-5-flash-lite-i2t    0 credits    ~4s
-i2t-gemini-3-6-flash-i2t         0 credits    ~6s
-i2t-gemini-3-7-flash-i2t         0 credits    ~6s     <- default for this skill
+i2t-gemini-3-5-flash-lite-i2t    $0           ~4s
+i2t-gemini-3-6-flash-i2t         $0           ~6s
+i2t-gemini-3-7-flash-i2t         $0           ~6s     <- default for this skill
 ```
 
 So the loop's economics are lopsided in exactly the right direction: **evaluating is
@@ -60,8 +60,8 @@ that made it converge. Cheap models exist for the generator too; use them while 
 *prompt* is still being tuned and switch to the expensive one only once the loop passes.
 
 If a judge needs to be better than free, `i2t-gemini-3-flash` and
-`i2t-claude-sonnet-4-6-vertex-i2t` are 8 credits (~$0.008). Do not reach for
-`i2t-gpt-5-5-i2t` (100 credits) or `i2t-openai-o3-deep-research` (900 credits, 10
+`i2t-claude-sonnet-4-6-vertex-i2t` are ~$0.008. Do not reach for
+`i2t-gpt-5-5-i2t` (~$0.10) or `i2t-openai-o3-deep-research` (~$0.90, 10
 minutes) — a judge that costs more than the generation defeats the point.
 
 ## The one thing that silently breaks this entire skill
@@ -101,7 +101,7 @@ before trusting a single verdict** (there is a smoke test below).
 Four steps. Steps 2 and 3 are free.
 
 ```
-1  GENERATE   one candidate            costs credits
+1  GENERATE   one candidate            costs money
 2  JUDGE      against the written goal free
 3  DECIDE     pass · refine · stop     free
 4  REFINE     change the prompt, once  → back to 1
@@ -210,7 +210,7 @@ same prompt, no seed     -> near_duplicate: false
 
 Both answers are literally true and completely useless. Two re-rolls are never
 pixel-identical, so a similarity gate always returns "different" and always authorises
-another spend. **That is the credit burn, re-implemented as a safety check.**
+another spend. **That is the re-roll burn, re-implemented as a safety check.**
 
 Ask the defect question instead: *"is the specific defect from last round still
 present?"* That is binary, grounded in the goal, and it converges.
@@ -247,8 +247,8 @@ describe first        demand `observed` before `verdict`, or the judge rules fro
 markdown fences       appear inconsistently on identical prompts. Always strip before
                       JSON.parse.
 text output           lands in outputs[0].url — the field is `url` for every modality.
-free judges           gemini 3.5-flash-lite / 3.6-flash / 3.7-flash are 0 credits.
-                      Never use o3-deep-research (900 credits, ~10 min) as a judge.
+free judges           gemini 3.5-flash-lite / 3.6-flash / 3.7-flash are $0.
+                      Never use o3-deep-research (~$0.90, ~10 min) as a judge.
 
 THE LOOP
 one candidate         per round. Four at once discards the thing that makes this a loop.

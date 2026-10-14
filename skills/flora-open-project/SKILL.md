@@ -88,5 +88,5 @@ has already read.
   a browser tab you control and nowhere else.
 - **Read before proposing.** Ideas come from the canvas and the user, not from
   the tool list.
-- **Generation spends credits.** Quote a cost before running anything the user
+- **Generation spends money.** Quote a cost before running anything the user
   picks.

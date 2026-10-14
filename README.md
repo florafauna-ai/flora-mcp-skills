@@ -164,7 +164,7 @@ the slowest possible use of the server. FLORA runs generations concurrently. The
 serialisation is entirely on the agent's side.
 
 Measured on a real six-item batch: fired together, **15.8 seconds**. The same six run
-one after another: about **150 seconds**. Identical credits, identical outputs, one
+one after another: about **150 seconds**. Identical cost, identical outputs, one
 tenth the wall clock — and the gap widens linearly with the size of your list.
 
 > **[`flora-batch-generate`](skills/flora-batch-generate/SKILL.md) is the flagship skill
@@ -182,7 +182,7 @@ tenth the wall clock — and the gap widens linearly with the size of your list.
 | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **[flora-batch-generate](skills/flora-batch-generate/SKILL.md)** ★ | You have a list — products, SKUs, campaign variants, localisations, scenes — and want one asset per row under a single consistent style. Handles parallel firing, batch polling, per-item variables, partial failure and retry classification. **Start here.** |
 
-### Refine — get one thing right, without burning credits
+### Refine — get one thing right, without burning money
 
 | Skill                                                        | Use it when                                                                                                                                                                                                                                                                                                                                                       |
 | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -192,7 +192,7 @@ tenth the wall clock — and the gap widens linearly with the size of your list.
 
 | Skill                                                                  | Use it when                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **[flora-motion-compositor](skills/flora-motion-compositor/SKILL.md)** | The subject already exists — a UI screenshot, a logo, a product photo, a Figma export — and you need real motion-graphics shots of it: 3D-tilted screens, staggered type reveals, camera moves, grade. Nothing is generated; every pixel comes from a file or a font, so type is pin-sharp, spelling is correct, and two renders of a scene are byte-identical. Renders from a JSON scene graph at **0 credits and ~12s a shot**, which makes re-rendering a whole film after a design change free. |
+| **[flora-motion-compositor](skills/flora-motion-compositor/SKILL.md)** | The subject already exists — a UI screenshot, a logo, a product photo, a Figma export — and you need real motion-graphics shots of it: 3D-tilted screens, staggered type reveals, camera moves, grade. Nothing is generated; every pixel comes from a file or a font, so type is pin-sharp, spelling is correct, and two renders of a scene are byte-identical. Renders from a JSON scene graph at **$0 and ~12s a shot**, which makes re-rendering a whole film after a design change free. |
 
 ### Sequence — script to moving pictures
 
@@ -369,7 +369,7 @@ and it is not "a description of the tools":
   refinement."_ If you cannot write that sentence, the skill is not ready.
 - **Measured numbers.** `265ms`, `3.45x`, `17% undercount`, `limit: 100`. Not "fast",
   not "expensive", not "usually works".
-- **Named gotchas.** The specific thing that silently ate someone's credits, written
+- **Named gotchas.** The specific thing that silently ate someone's budget, written
   down with what it looked like when it happened. The most valuable content in this
   repo is the failure someone already paid for.
 - **What it does _not_ do.** Where the skill stops, stated plainly, so an agent does
@@ -444,7 +444,7 @@ hooks, no background processes and no telemetry of its own.
   call needs to `https://agents.flora.ai/mcp`: prompts, reference images and files you
   provide, model and technique choices, and project or canvas content you ask it to
   read or change. You sign in with your own FLORA account over OAuth; nothing is sent
-  until you connect. Generations run against your FLORA account and use its credits,
+  until you connect. Generations run against your FLORA account and bill its usage,
   and results are stored in your FLORA workspace and served from `media.flora.ai`.
 - **What stays local.** `flora-motion-compositor` includes one readable Python script,
   `scripts/comp.py`, that renders frames on your machine with ffmpeg and, for SVG

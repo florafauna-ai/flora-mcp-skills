@@ -30,7 +30,7 @@ whether a batch takes ninety seconds or an hour.
 
 Measured, this skill's own hand-test: **six items, fired together, all complete in
 15.8 seconds.** The same six at the model's estimated 25s each, run one after another,
-would be about 150 seconds. Same credits, same outputs, one tenth the wall clock.
+would be about 150 seconds. Same cost, same outputs, one tenth the wall clock.
 
 ## The law
 
@@ -71,17 +71,17 @@ Plan, fire, poll, settle. Submit up to 20 independent requests per
 
 Nothing here spends. Everything here prevents spend.
 
-`flora_list_models` returns what one call needs: `model_id`, `estimated_credits`,
+`flora_list_models` returns what one call needs: `model_id`, `estimated_cost_usd`,
 `estimated_seconds`, and `params` — the ONLY valid param names and enum values.
 Pick the row by `model_id` (e.g. `t2i-flux-2-klein-4b`).
 
-**Total the cost and stop.** Multiply and state it plainly — *"24 items x 4 credits =
-96 credits, about $0.10. Proceed?"* — then wait for a yes. Do this even when the
+**Total the cost and stop.** Multiply and state it plainly — *"24 items x $0.0039 =
+about $0.09. Proceed?"* — then wait for a yes. Do this even when the
 per-item figure is trivial. The batch is exactly where a trivial figure stops being
 trivial, and the user is the one who finds out.
 
-Measured conversion on the hand-test: `estimated_credits: 4` settled at
-`charged_cost: 0.004`, so **1 credit ≈ $0.001**. Quote credits and dollars both.
+Quote in US dollars, never credits: `estimated_cost_usd`, `run_cost` and
+`charged_cost` are all dollars. `estimated_credits` is a legacy unit; ignore it.
 
 **Validate every param against `m.params` before firing.** This is not defensive
 tidiness, it is the most expensive silent failure on this surface:
@@ -152,10 +152,10 @@ argument, and it is worth the measured numbers because the serial habit is stron
 ```
 
 One list is **24x faster than twenty serial retrieves while covering five times as
-many runs**. And this is per poll cycle: a forty-item batch polled every five seconds
-for three minutes is 36 cycles. Central polling spends ten seconds of that on polling.
-Serial retrieval spends 36 × 40 × 312ms — about seventy-five minutes of round trips
-inside a three-minute batch. It does not finish; it thrashes.
+many runs**. And this is per poll cycle: a forty-item batch polled every fifteen
+seconds for three minutes is 12 cycles. Central polling spends about three seconds of
+that on polling. Serial retrieval spends 12 × 40 × 312ms — about two and a half minutes
+of round trips inside a three-minute batch. It does not finish; it thrashes.
 
 **`limit: 100` explicitly, every time.** 100 is the API's hard maximum
 (`limit` is validated `min(1).max(100)`). It is *not* the default — the MCP
@@ -242,10 +242,10 @@ anything else goes in the report for the user to decide.
 ### Retrying safely
 
 Never re-fire the whole batch after a partial failure: successful entries already
-spent credits, and a timed-out call may still have started runs. Read first —
+spent money, and a timed-out call may still have started runs. Read first —
 `flora_list_generations` with the batch's `project_id` (or the `run_id → item` map's
 `run_ids`, up to 20) — then re-fire only the items that genuinely have no run.
-A run that failed *after* it was created still burned its credits; inspect its error
+A run that failed *after* it was created still billed; inspect its error
 before deciding whether the same request can succeed on a second try.
 
 ## Gotchas
@@ -300,21 +300,23 @@ When every item needs the *same multi-step treatment* rather than the same promp
 background swap, relight, sketch-to-render — fire one `flora_run_technique` per item,
 all in parallel, instead of one `flora_create_generations` batch. The law and the four
 phases are unchanged. One difference: cost comes from the technique's `run_cost`, not
-from a model's `estimated_credits`.
+from a model's `estimated_cost_usd`.
 
 Resolve one technique for the whole batch. Items needing two techniques are two
 batches.
 
 ## Not polling at all
 
-Every create accepts a `callback_url` — an HTTPS endpoint that receives a signed POST
-when the run reaches a terminal state (`run.completed` / `run.failed`), HMAC-SHA256
-signed via `Flora-Signature`, retried three times with backoff.
+The hosted MCP tools take no `callback_url`; poll as above. Direct REST and SDK calls
+(`POST /generations`, `client.generations.create`) accept one — an HTTPS endpoint that
+receives a signed POST when the run reaches a terminal state (`run.completed` /
+`run.failed`), HMAC-SHA256 signed via `Flora-Signature`, retried three times with
+backoff.
 
-If the user has somewhere to receive a webhook, that is strictly better than polling
-and it removes the sandbox timeout from the problem entirely. Most agent sessions do
-not, which is why this skill is written around polling — but ask, on a batch large
-enough that polling is the awkward part.
+If the user drives the batch from their own code and has somewhere to receive a
+webhook, that is strictly better than polling and it removes the sandbox timeout from
+the problem entirely. Most agent sessions do not, which is why this skill is written
+around polling.
 
 ## Reporting back
 

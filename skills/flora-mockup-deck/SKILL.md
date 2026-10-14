@@ -147,7 +147,7 @@ package everything, ship. If a placement is visibly wrong, say so in a sentence.
 
 Regenerating a resize **re-letters the type** — the exact failure this skill exists to
 prevent. So the resizes are done with prebuilt FLORA actions, which are deterministic,
-credit-free, and never touch the pixels of the plate itself.
+free, and never touch the pixels of the plate itself.
 
 Run each with `flora_run_action`, passing **the master creative's** url as the image
 input — never a placement url. These are social crops of the ad itself, which is what
@@ -559,7 +559,7 @@ run status            poll flora_list_generations with run_ids for exact runs, o
                       its own does not mean done, and neither does a "running" status
                       mean it is not.
 flora_run_action      runs a prebuilt action headlessly on inputs supplied inline.
-                      Credit-free and deterministic — where the resizes and the contact
+                      Free and deterministic — where the resizes and the contact
                       sheet come from. It does NOT touch the canvas: outputs land under
                       media.flora.ai/code-sandbox/... and never appear as canvas nodes.
                       project_id only scopes authorization and generation history.
@@ -580,7 +580,7 @@ flora_list_canvas_nodes  returns media nodes with their asset urls. Use
 ids                   project_id is REQUIRED on flora_create_generations, and it must belong to
                       the workspace you pass, or: 400 input_validation_error "Project
                       does not belong to the specified workspace."
-credits               every placement bills. State the total and get a yes before the
+cost                  every placement bills. State the total and get a yes before the
                       first call. Nothing is refundable and retries bill again.
                       The charged_cost flora_create_generations returns AT FIRE TIME UNDERSTATES
                       the bill: measured 0.253 quoted against 0.873 actually charged,
@@ -749,7 +749,7 @@ packing entirely, since it references the urls rather than embedding anything.
 
 ### The contact sheet, as a fallback
 
-Still worth building where actions are available: one composite image, credit-free and
+Still worth building where actions are available: one composite image, free and
 deterministic, that a user can drop straight into a deck of their own.
 
 ```

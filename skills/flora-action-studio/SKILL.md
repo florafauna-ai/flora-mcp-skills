@@ -25,7 +25,7 @@ id. Polling belongs to the studio once it is open; only a host without MCP Apps 
 needs `flora_list_generations` from you.
 
 Actions are deterministic transforms (crop, colour grade, resize, overlay, a user's own
-code) that spend no credits; techniques are saved multi-step workflows that bill `run_cost`
+code) that bill no usage; techniques are saved multi-step workflows that bill `run_cost`
 per run. In MCP Apps hosts, `flora_run_action`, `flora_run_canvas_action` and
 `flora_run_technique` open the **action studio**: the action's declared parameters become
 controls, and **nothing runs until the user clicks Apply**, which runs it once with the

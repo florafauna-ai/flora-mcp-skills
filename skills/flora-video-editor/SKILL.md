@@ -136,7 +136,7 @@ hand back the run ID and pending status so work can resume without duplicating i
 ## Account for the render and deliver visible media
 
 Timeline renders use the video editor's own render usage/reservation path, not
-the generation-model credit estimate. Started run responses deliberately omit
+the generation-model cost estimate. Started run responses deliberately omit
 model/cost estimates; absent costs do not mean free. Generation-history version
 rows for Timeline renders also lack render cost fields. Use the workspace's
 video-editor usage/billing information for render spend, and say when that data

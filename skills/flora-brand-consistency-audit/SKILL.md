@@ -104,7 +104,7 @@ and audit the dimensions you *can* check — orientation and framing — from th
 original or the delivered file. For an ad platform or a PDP it is the delivered one that
 gets rejected, and it is the one nobody checks.
 
-Then look at the set **as a set**. Lay it out as a contact sheet, not a scroll — `flora_run_action` with `side-by-side-composite-browser`, which is credit-free but **entitled per workspace**: it returns `403 "Actions are not enabled for this workspace"` on plans without it. Where that fires, fall back to judging in generation order and say the set-level pass was done serially. The set-level questions:
+Then look at the set **as a set**. Lay it out as a contact sheet, not a scroll — `flora_run_action` with `side-by-side-composite-browser`, which is free but **entitled per workspace**: it returns `403 "Actions are not enabled for this workspace"` on plans without it. Where that fires, fall back to judging in generation order and say the set-level pass was done serially. The set-level questions:
 
 - Does the **palette drift** across the run — do the last twenty read cooler or warmer than the first twenty?
 - Does the **treatment hold** — same lighting logic on every asset, or does it wander?

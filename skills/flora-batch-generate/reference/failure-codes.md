@@ -88,7 +88,7 @@ message names safety, moderation, a refusal, or a policy, treat the item as
 `change_input` no matter what the code says. In a batch the cost of getting this wrong
 compounds: an automatic retry tier will re-bill the same refusal on every pass.
 
-## Credits and refunds
+## Cost and refunds
 
 Every category except `INSUFFICIENT_CREDITS` is marked refundable, so a failed run
 generally does not cost. A **retry is a new generation and bills again** — which is

@@ -126,12 +126,12 @@ Hosted `flora_create_generations` takes **one** `image_url`. `params.image_urls`
 accepted, silently ignored, and still billed.
 
 To get a product _and_ a model into one frame, stitch them into a single sheet first
-with a credit-free action, and pass the sheet:
+with a free action, and pass the sheet:
 
 ```
 flora_run_action  side-by-side-composite-browser
                   { layout: "horizontal-2", normalize: "match-largest" }
-                  -> one image, 9 seconds, 0 credits
+                  -> one image, 9 seconds, $0
 ```
 
 Measured, it works. A product plate left, a street portrait right, returned one unified
@@ -267,7 +267,7 @@ true span (created_at -> completed_at)     observed as "running"
 ```
 
 `progress` never moved off `0` on either — it is a placeholder, not a progress bar. A
-_technique_ run does report real progress (40 → 70 → 94 → 100), and a credit-free
+_technique_ run does report real progress (40 → 70 → 94 → 100), and a free
 _action_ completed and read back correctly in 9 seconds with no lag. The lag belongs to
 generation runs.
 
