@@ -113,7 +113,7 @@ render      2.5 - 3.0s
 cut         0.8 - 1.5s
 ```
 
-The extra tail is free here — no credits, no queue — and it means a beat can
+The extra tail is free here — no cost, no queue — and it means a beat can
 grow later without re-rendering. Unlike i2v, the **first frames are usable**:
 there is no ease-in from a still, so a window can start at `in: 0.0`.
 

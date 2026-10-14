@@ -170,13 +170,13 @@ The arithmetic is the argument: a drifted keyframe caught here costs $0.004 to r
 same keyframe caught after Stage 3 costs $0.004 **plus** the $0.12–$0.35 clip that was
 animated from it, and the clip has to be regenerated too.
 
-Judging is free. FLORA has image-to-text models that cost **0 credits** and return in
+Judging is free. FLORA has image-to-text models that cost **$0** and return in
 about six seconds:
 
 ```
-i2t-gemini-3-5-flash-lite-i2t   0 credits   ~4s
-i2t-gemini-3-6-flash-i2t        0 credits   ~6s
-i2t-gemini-3-7-flash-i2t        0 credits   ~6s
+i2t-gemini-3-5-flash-lite-i2t   $0          ~4s
+i2t-gemini-3-6-flash-i2t        $0          ~6s
+i2t-gemini-3-7-flash-i2t        $0          ~6s
 ```
 
 > **Judge inputs are plural arrays. This is the opposite of generation inputs.**
@@ -220,15 +220,15 @@ then does Stage 3 exist.
 Nothing about the still stage's cost or timing carries over. Pull real numbers before
 firing:
 
-`flora_list_models` returns `estimated_credits`, `estimated_seconds` and `params`
+`flora_list_models` returns `estimated_cost_usd`, `estimated_seconds` and `params`
 per model — pull the row for the model you intend to use.
 
-Measured spread across `i2v` endpoints: **134 to 900+ credits**, and
+Measured spread across `i2v` endpoints: **$0.134 to $0.90+**, and
 `estimated_seconds` from **30 to 360**. Both vary by an order of magnitude, so a number
 you remember from a previous run is not a number you may quote.
 
-**`estimated_credits: 0` does not mean free.** Several endpoints — the Seedance 2.5
-family among them — report `0` credits alongside a 300-second estimate. That is a gap
+**`estimated_cost_usd: 0` does not mean free.** Several endpoints — the Seedance 2.5
+family among them — report `0` alongside a 300-second estimate. That is a gap
 in the catalog, not a price. Never present a zero as free; fire one clip, read the
 settled `charged_cost`, and quote from that.
 
@@ -366,13 +366,13 @@ describe first         force `observed` before `verdict` or the judge rules from
                        prompt text instead of the pixels.
 markdown fences        appear inconsistently on identical prompts. Strip before parsing.
 same url twice         de-duplicates to one image. Reference and frame must differ.
-free judges            i2t/v2t gemini 3.5-flash-lite, 3.6-flash, 3.7-flash = 0 credits.
+free judges            i2t/v2t gemini 3.5-flash-lite, 3.6-flash, 3.7-flash = $0.
 
 VIDEO STAGE COST + TIMING
-never reuse            still-stage numbers. Pull estimated_credits and estimated_seconds
+never reuse            still-stage numbers. Pull estimated_cost_usd and estimated_seconds
                        from flora_list_models({ type: "video" }) every time.
-measured spread        134 to 900+ credits; 30 to 360 estimated seconds.
-estimated_credits: 0   is a CATALOG GAP, not free. Seedance 2.5 reports 0 with a 300s
+measured spread        $0.134 to $0.90+; 30 to 360 estimated seconds.
+estimated_cost_usd: 0  is a CATALOG GAP, not free. Seedance 2.5 reports 0 with a 300s
                        estimate. Fire one, read settled charged_cost, quote from that.
 confirm the total      before firing. This stage is not refundable for taste.
 

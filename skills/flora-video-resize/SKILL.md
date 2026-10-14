@@ -17,15 +17,15 @@ User supplies a video (upload or URL) and wants it in other aspect ratios/format
 
 ## Critical API fact (the #1 failure mode)
 
-`flora_create_generations` **silently ignores** any attempt to pass a source video via `params` (e.g. `video_url`) or an `inputs` array — it will happily run text-to-video from your prompt and burn credits producing an unrelated clip. A v2v model ONLY receives the source through a **canvas edge**. Never call `flora_create_generations` for v2v without a wired `node_id`.
+`flora_create_generations` **silently ignores** any attempt to pass a source video via `params` (e.g. `video_url`) or an `inputs` array — it will happily run text-to-video from your prompt and bill for an unrelated clip. A v2v model ONLY receives the source through a **canvas edge**. Never call `flora_create_generations` for v2v without a wired `node_id`.
 
 ## Steps
 
 1. **Probe the source.** `ffprobe` → width/height/AR, duration, audio stream. Extract 2–3 frames (`ffmpeg -ss N -vframes 1`) and LOOK at them: note subject (identity, wardrobe, pose), scene, motion, camera move, color grade, and every piece of on-screen text/logo verbatim. These feed the prompt.
 2. **Upload to FLORA.** `flora_create_asset` (URL fetch if the file has a URL; otherwise `source="signed-url"` → POST bytes from shell → `flora_complete_asset`). Create/choose a project; `flora_attach_asset` puts the asset on the canvas and returns its node id.
 3. **Pick the model** (all take the source via canvas edge; AR is a native output param):
-   - **Seedance 2.5** (`v2v-seedance-2-5`) — DEFAULT. ARs: 16:9, 9:16, 4:3, 3:4, 1:1, 21:9; duration up to 30s (match the source!); 480p–1080p; keeps/regenerates audio. Verified: preserves grade, wardrobe, scene, and re-typesets brand text cleanly. Actual cost ≈ 1.2 credits/sec at 1080p (the catalog's "estimated_credits: 0" for gateway models is WRONG — quote ~14 credits for a 12s 1080p run before firing).
-   - **Kling O3 Pro Edit** (`v2v-kling-o3-edit`) — quality alternative, ARs 16:9/1:1/9:16 only, ~933 est. credits.
+   - **Seedance 2.5** (`v2v-seedance-2-5`) — DEFAULT. ARs: 16:9, 9:16, 4:3, 3:4, 1:1, 21:9; duration up to 30s (match the source!); 480p–1080p; keeps/regenerates audio. Verified: preserves grade, wardrobe, scene, and re-typesets brand text cleanly. Actual cost ≈ $1.20 per output second at 1080p, and the source clip's seconds bill alongside the output (the catalog's "estimated_cost_usd: 0" for gateway models is WRONG — budget well above $14 for a 12s source → 12s 1080p run, and read the first run's settled `charged_cost` before quoting a batch).
+   - **Kling O3 Pro Edit** (`v2v-kling-o3-edit`) — quality alternative, ARs 16:9/1:1/9:16 only, ~$0.93 est.
    - **WAN 2.6 v2v** (`v2v-wan-2.6`) — has 3:4/4:3, but duration caps at 10s.
    - **Gemini Omni 1.1 Flash v2v** — 16:9/9:16 only, up to 4K.
    - **4:5 is native nowhere**: generate 3:4 (WAN) or 9:16 (Seedance), then the FREE `change-video-ar` action to center-crop the small delta.

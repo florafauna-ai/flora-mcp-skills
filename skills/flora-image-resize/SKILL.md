@@ -79,7 +79,7 @@ the source was dropped and everything after it is text-to-image.
 gets `i2i-imagen-3-outpainting` or `i2i-out-flux-2-pro`, neither of which exposes an
 aspect ratio — the one parameter this job is about. Reach for `i2i-qwen-image-edit`.
 
-**`i2i-out-flux-2-pro` reports `estimated_credits: 0`.** It is not free. Its
+**`i2i-out-flux-2-pro` reports `estimated_cost_usd: 0`.** It is not free. Its
 provider is `generation_gateway`, and the catalog reports 0 for every model behind
 that gateway — the same defect `flora-video-resize` names for Seedance. Never quote
 a gateway model's cost from the catalog.

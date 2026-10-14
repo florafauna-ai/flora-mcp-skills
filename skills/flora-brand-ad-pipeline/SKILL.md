@@ -130,7 +130,7 @@ The generated frame is not the deliverable. The deliverable is the frame plus th
 deterministic layers.
 
 - Composite the price and the logo lockup per `brand.json`. A FLORA action does this at
-  0 credits — the composite actions measured at ~9 seconds on `flora-pdp-deck` — or do
+  $0 — the composite actions measured at ~9 seconds on `flora-pdp-deck` — or do
   it in your own code if you already have an image pipeline.
 - Then run the QC gate. **These are the only brand checks that can be made honestly:**
 
@@ -178,7 +178,7 @@ at a time. A batch write at the end loses everything if the last call fails.
 ## The gates
 
 ```
-1  cost              before firing        state credits and dollars, wait for a yes
+1  cost              before firing        state the USD total, wait for a yes
 2  structural QC     before upload        dimensions, price layer, palette
 3  contact sheet     before Meta          one grid, one URL, for a human
 4  paused            in Meta              the human publishes, never the agent
