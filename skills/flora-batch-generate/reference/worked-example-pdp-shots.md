@@ -54,7 +54,9 @@ quoted at create  $0.004 each
 
 ## Phase 3 — poll
 
-One `flora_list_generations({ project_id, limit: 100 })` per cycle, at least fifteen seconds apart.
+One `flora_list_generations({ project_id, limit: 100 })` per cycle. The measurement below
+polled five seconds apart; poll at least fifteen seconds apart now, and honor any
+`retry_after_seconds`, so the same batch settles nearer 30 seconds.
 
 ```
 cycles to all-terminal   3
@@ -64,7 +66,7 @@ wall-clock to complete   15,810 ms
 ```
 
 Sequentially at the model's estimated 25s each, the same six would be about 150
-seconds. The batch is **~10x faster for identical cost.**
+seconds. At today's polling interval the batch is still **~5x faster for identical cost.**
 
 ## Phase 4 — settle
 

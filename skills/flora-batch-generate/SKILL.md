@@ -153,7 +153,9 @@ argument, and it is worth the measured numbers because the serial habit is stron
 
 One list is **24x faster than twenty serial retrieves while covering five times as
 many runs**. And this is per poll cycle: a forty-item batch polled every fifteen
-seconds for three minutes is 12 cycles. Central polling spends about three seconds of
+seconds for three minutes is 12 cycles (reading those runs by `run_ids` instead needs
+`max(15, 2 × ids)` seconds between polls — 40 s for 20 ids — and any cooldown error's
+`retry_after_seconds` wins). Central polling spends about three seconds of
 that on polling. Serial retrieval spends 12 × 40 × 312ms — about two and a half minutes
 of round trips inside a three-minute batch. It does not finish; it thrashes.
 
@@ -308,7 +310,7 @@ batches.
 ## Not polling at all
 
 The hosted MCP tools take no `callback_url`; poll as above. Direct REST and SDK calls
-(`POST /generations`, `client.generations.create`) accept one — an HTTPS endpoint that
+(`POST /generate`, `client.generations.create`) accept one — an HTTPS endpoint that
 receives a signed POST when the run reaches a terminal state (`run.completed` /
 `run.failed`), HMAC-SHA256 signed via `Flora-Signature`, retried three times with
 backoff.
