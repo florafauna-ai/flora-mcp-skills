@@ -1,0 +1,52 @@
+name: Publish to MCP Registry
+
+# Publishes server.json as ai.flora/flora to registry.modelcontextprotocol.io.
+# Version comes from .claude-plugin/plugin.json; registry versions are immutable,
+# so an already-published version is skipped.
+on:
+  push:
+    branches: [main]
+    paths: [".claude-plugin/plugin.json", "server.json"]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # MCP_PRIVATE_KEY (hex Ed25519 key for the flora.ai TXT record) lives on this
+    # environment, restricted to main with a required reviewer.
+    environment: mcp-registry-publish
+    permissions:
+      contents: read
+    env:
+      MCP_PUBLISHER_VERSION: "1.8.1"
+      MCP_PUBLISHER_SHA256: "a06c9096dcb9727c13555b6be26c7effa707b01f06a4c561ba7a3635443cf2cc"
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set server.json version from plugin.json
+        id: version
+        run: |
+          version="$(jq -r .version .claude-plugin/plugin.json)"
+          jq --arg v "$version" '.version = $v' server.json > server.tmp && mv server.tmp server.json
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          status="$(curl -s -o /dev/null -w '%{http_code}' "https://registry.modelcontextprotocol.io/v0.1/servers/ai.flora%2Fflora/versions/$version")"
+          if [ "$status" = "200" ]; then echo "exists=true" >> "$GITHUB_OUTPUT"; echo "$version already published, skipping"; fi
+
+      - name: Install mcp-publisher
+        if: steps.version.outputs.exists != 'true'
+        run: |
+          curl -fsSLo mcp-publisher.tar.gz "https://github.com/modelcontextprotocol/registry/releases/download/v${MCP_PUBLISHER_VERSION}/mcp-publisher_linux_amd64.tar.gz"
+          echo "${MCP_PUBLISHER_SHA256}  mcp-publisher.tar.gz" | sha256sum -c -
+          tar xzf mcp-publisher.tar.gz mcp-publisher
+
+      - name: Validate
+        if: steps.version.outputs.exists != 'true'
+        run: ./mcp-publisher validate server.json
+
+      - name: Publish
+        if: steps.version.outputs.exists != 'true'
+        env:
+          MCP_PRIVATE_KEY: ${{ secrets.MCP_PRIVATE_KEY }}
+        run: |
+          ./mcp-publisher login dns --domain flora.ai --private-key "$MCP_PRIVATE_KEY"
+          ./mcp-publisher publish server.json
