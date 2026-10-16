@@ -1,0 +1,18 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "ai.flora/flora",
+  "title": "FLORA",
+  "description": "Generate and edit images, video, audio, text and 3D on FLORA's AI creative canvas.",
+  "version": "0.11.5",
+  "websiteUrl": "https://flora.ai/mcp",
+  "repository": {
+    "url": "https://github.com/florafauna-ai/flora-mcp-skills",
+    "source": "github"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://agents.flora.ai/mcp"
+    }
+  ]
+}
