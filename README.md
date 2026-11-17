@@ -171,8 +171,8 @@ source; `flora_list_tools` returns it from inside a session.
 | Comments | `flora_list_comment_threads`, `flora_create_comment_thread`, `flora_reply_to_comment_thread`, `flora_resolve_comment_thread` |
 | Skills and account | `flora_discover_skills`, `flora_list_tools`, `flora_get_usage` |
 
-Every generation call returns a US-dollar quote before it runs. Sign-in is OAuth, so
-there is no API key to configure.
+Estimate the cost and get the user's approval before creating generations; creating
+starts paid work. Sign-in is OAuth, so there is no API key to configure.
 
 ---
 
