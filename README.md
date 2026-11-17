@@ -1,6 +1,7 @@
-# FLORA MCP Skills
+# FLORA MCP: server and skills
 
-Workflows for pointing your agent at [FLORA](https://flora.ai) and getting real work
+The official FLORA MCP server (`https://agents.flora.ai/mcp`) and the hand-tested skills
+that go with it. Workflows for pointing your agent at [FLORA](https://flora.ai) and getting real work
 back — not just tool access.
 
 FLORA's MCP server gives any agent the ability to generate images, video, audio and
@@ -151,6 +152,27 @@ again, or re-zip the folder from a freshly pulled clone and re-upload.
 
 **Raw URL — nothing to do.** That path always serves `main`, so it is current the moment
 we push. If you want to be sure you are reading today's version of a skill, use it.
+
+---
+
+## Tools
+
+The server exposes these tool groups. Your client's tool list is always the current
+source; `flora_list_tools` returns it from inside a session.
+
+| Group | Tools |
+|---|---|
+| Generate | `flora_create_generations`, `flora_list_generations`, `flora_list_models`, `flora_view_model3d` |
+| Techniques and actions | `flora_list_techniques`, `flora_get_technique`, `flora_run_technique`, `flora_list_technique_runs`, `flora_search_actions`, `flora_get_action`, `flora_run_action` |
+| Canvas | `flora_get_canvas`, `flora_list_canvas_nodes`, `flora_add_to_canvas`, `flora_update_canvas_nodes`, `flora_run_canvas_nodes`, `flora_arrange_canvas`, `flora_remove_from_canvas` |
+| Projects and workspaces | `flora_list_workspaces`, `flora_list_projects`, `flora_get_project`, `flora_create_project`, `flora_open_project`, `flora_list_folders`, `flora_share_project` |
+| Assets | `flora_create_asset`, `flora_complete_asset`, `flora_get_asset`, `flora_list_assets`, `flora_attach_asset` |
+| LoRAs | `flora_list_lora_trainers`, `flora_train_lora`, `flora_get_lora` |
+| Comments | `flora_list_comment_threads`, `flora_create_comment_thread`, `flora_reply_to_comment_thread`, `flora_resolve_comment_thread` |
+| Skills and account | `flora_discover_skills`, `flora_list_tools`, `flora_get_usage` |
+
+Every generation call returns a US-dollar quote before it runs. Sign-in is OAuth, so
+there is no API key to configure.
 
 ---
 
