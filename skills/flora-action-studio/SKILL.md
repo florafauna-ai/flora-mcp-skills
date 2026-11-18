@@ -56,8 +56,8 @@ output URLs and final values.
      with one plain word ("color", "blur") before concluding no prebuilt fits. Read the
      result's `params`: the keys, types, ranges and options the studio will show.
    - Custom (the user's own code or a transform no prebuilt covers): write the code with
-     `@flora-*` annotations and create it with `flora_add_action` passing `code` and
-     `language` (see Custom actions below). This needs a canvas project.
+     `@flora-*` annotations and create it with `flora_create_custom_action` passing `code`
+     and `language` (see Custom actions below). This needs a canvas project.
    - Technique (custom action flow): `flora_list_techniques` and match on intent;
      `flora_get_technique` gives the input ids and `run_cost`.
 
@@ -74,29 +74,34 @@ output URLs and final values.
      `mcp_upload_…`); check with `flora_get_canvas` and attach it with `flora_attach_asset`
      only if that node is missing, or the image lands there twice. Never base64-encode.
 
-4. **Open the studio with reasonable values.** Pass `open_only: true` on the run tool:
-   the studio opens on the inputs and nothing runs or bills until the user clicks Apply.
-   (Leave `open_only` out when the user asked you to run the action now rather than tune it,
+4. **Open the studio with reasonable values.** Use the opener tool, not the run tool:
+   `flora_open_action_studio` (headless) or `flora_open_canvas_action_studio` (a canvas
+   node) takes the same arguments as its run tool, opens the studio on the inputs, and
+   nothing runs or bills until the user clicks Apply. A technique has no opener: pass
+   `open_only: true` on `flora_run_technique`, or it starts a billed run at once. (Call the
+   run tool, without `open_only`, when the user asked you to run it now rather than tune it,
    and in a host without MCP Apps, where the call itself must run.)
    Send only declared parameter keys (snake_case, as `params[]` lists them); omit the rest
    so defaults apply.
-   - Prebuilt, headless: `flora_run_action` with `workspace_id`, `project_id`, `action_id`,
+   - Prebuilt, headless: `flora_open_action_studio` (or `flora_run_action` to run now) with
+     `workspace_id`, `project_id`, `action_id`,
      `inputs: [{ "type": "image", "url": "…" }]` and `params`. Nothing lands on the canvas
      until the user saves it from the studio.
-   - On the canvas (prebuilt or custom): place the action with `flora_add_action`, add the
+   - On the canvas (prebuilt or custom): place the action with `flora_add_action` (prebuilt)
+     or `flora_create_custom_action` (custom), add the
      source with `flora_add_to_canvas` (`type: "static_image"`, `content_url`) connected
      to it in the same call (`connect: [{"from": "<ref>", "to": "<node id>"}]`; to name
      the slot, `in` is the declared input's `name`, e.g. `"source"`, never a modality such
-     as `"image"`), then `flora_run_canvas_action` with `project_id` and the
-     node id. Outputs come back from `flora_list_generations`; a browser open on the
+     as `"image"`), then `flora_open_canvas_action_studio` (or `flora_run_canvas_action`
+     to run now) with `project_id` and the node id. Outputs come back from `flora_list_generations`; a browser open on the
      canvas materialises them as result nodes, a run started from here may not, so read
      `flora_get_canvas` before telling the user something is on the canvas. Check the tool
      first: when `flora_run_canvas_action` lists a `params` argument, pass values there to
      set them on the node before the run; when it lists none, this FLORA release cannot
      change a canvas action's settings from the studio (its controls open read-only), so
      tune a prebuilt action headlessly instead.
-   - Technique: `flora_run_technique` with `technique_id` and `inputs` keyed by the ids
-     from `flora_get_technique`. State the cost first; each run bills.
+   - Technique: `flora_run_technique` with `technique_id`, `inputs` keyed by the ids
+     from `flora_get_technique`, and `open_only: true`. State the cost first; each run bills.
 
 5. **Hand over, then wait.** Tell the user the studio is open, what the controls do, and that
    **Apply** runs it, in one or two sentences, then end your turn. Do not start a run
@@ -123,8 +128,8 @@ output URLs and final values.
 
 ## Custom actions
 
-A custom action is code the workspace owns, created with `flora_add_action` (`code`,
-`language`, optional `label` and `runtime`) instead of `action_id`. Declare its contract in
+A custom action is code the workspace owns, created with `flora_create_custom_action`
+(`code`, `language`, optional `label` and `runtime`). Declare its contract in
 comment lines at the top of the file, one annotation per line, `# @flora-x: value` in Python
 and `// @flora-x: value` in JavaScript (a space instead of the colon also works):
 
@@ -311,8 +316,8 @@ export const preview = {
 
 When a run fails (the studio shows the error, or `flora_list_generations` reports
 `failed` with a traceback), read the message, fix the code, and **update the same node**:
-`flora_add_action` with `project_id`, `node_id` (the node you created) and the new `code`
-(and `language` if it changed). The node keeps its id, its wiring and the parameter values
+`flora_update_canvas_action` with `project_id`, `node_id` (the node you created) and the new
+`code` (and `language` if it changed). The node keeps its id, its wiring and the parameter values
 the new code still declares; its preview state is reset. Never add a second node for the
 same action and never leave a broken one on the canvas. Then run it again with
 `flora_run_canvas_action`.
